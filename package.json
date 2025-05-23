@@ -29,11 +29,11 @@
   "author": "Nikolai Bockholt",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/username/personio-mcp-server.git"
+    "url": "git+https://github.com/NikolaiGoMedicus/personio-mcp-server.git"
   },
-  "homepage": "https://github.com/username/personio-mcp-server#readme",
+  "homepage": "https://github.com/NikolaiGoMedicus/personio-mcp-server#readme",
   "bugs": {
-    "url": "https://github.com/username/personio-mcp-server/issues"
+    "url": "https://github.com/NikolaiGoMedicus/personio-mcp-server/issues"
   },
   "keywords": [
     "personio",
