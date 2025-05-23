@@ -1,0 +1,199 @@
+#!/usr/bin/env node
+
+import 'dotenv/config';
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import {
+  CallToolRequestSchema,
+  ErrorCode,
+  ListToolsRequestSchema,
+  McpError,
+} from '@modelcontextprotocol/sdk/types.js';
+import { PersonioClient } from './api/personio-client.js';
+import { 
+  EmployeeHandlers, 
+  AttendanceHandlers, 
+  AbsenceHandlers, 
+  AnalyticsHandlers, 
+  UtilityHandlers,
+  DocumentHandlers,
+  ApprovalHandlers
+} from './handlers/index.js';
+import { toolDefinitions } from './tools/tool-definitions.js';
+
+// Environment variables
+const CLIENT_ID = process.env.PERSONIO_CLIENT_ID;
+const CLIENT_SECRET = process.env.PERSONIO_CLIENT_SECRET;
+
+if (!CLIENT_ID || !CLIENT_SECRET) {
+  throw new Error('PERSONIO_CLIENT_ID and PERSONIO_CLIENT_SECRET environment variables are required');
+}
+
+class PersonioServer {
+  private server: Server;
+  private personioClient: PersonioClient;
+  private employeeHandlers: EmployeeHandlers;
+  private attendanceHandlers: AttendanceHandlers;
+  private absenceHandlers: AbsenceHandlers;
+  private analyticsHandlers: AnalyticsHandlers;
+  private utilityHandlers: UtilityHandlers;
+  private documentHandlers: DocumentHandlers;
+  private approvalHandlers: ApprovalHandlers;
+
+  constructor() {
+    this.server = new Server(
+      {
+        name: 'personio-mcp-server',
+        version: '0.1.0',
+      },
+      {
+        capabilities: {
+          tools: {},
+        },
+      }
+    );
+
+    this.personioClient = new PersonioClient({
+      clientId: CLIENT_ID!,
+      clientSecret: CLIENT_SECRET!,
+    });
+
+    // Initialize handlers
+    this.employeeHandlers = new EmployeeHandlers(this.personioClient);
+    this.attendanceHandlers = new AttendanceHandlers(this.personioClient);
+    this.absenceHandlers = new AbsenceHandlers(this.personioClient);
+    this.analyticsHandlers = new AnalyticsHandlers(this.personioClient);
+    this.utilityHandlers = new UtilityHandlers(this.personioClient);
+    this.documentHandlers = new DocumentHandlers(this.personioClient);
+    this.approvalHandlers = new ApprovalHandlers(this.personioClient);
+
+    this.setupToolHandlers();
+    
+    // Error handling
+    this.server.onerror = (error) => console.error('[MCP Error]', error);
+    process.on('SIGINT', async () => {
+      await this.server.close();
+      process.exit(0);
+    });
+  }
+
+  private setupToolHandlers() {
+    this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
+      tools: toolDefinitions,
+    }));
+
+    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+      try {
+        switch (request.params.name) {
+          // Employee Tools
+          case 'get_employee':
+            return await this.employeeHandlers.handleGetEmployee(request.params.arguments);
+          
+          case 'list_employees':
+            return await this.employeeHandlers.handleListEmployees(request.params.arguments);
+          
+          case 'search_employees':
+            return await this.employeeHandlers.handleSearchEmployees(request.params.arguments);
+          
+          // Attendance Tools
+          case 'get_attendance_records':
+            return await this.attendanceHandlers.handleGetAttendanceRecords(request.params.arguments);
+          
+          case 'get_current_attendance_status':
+            return await this.attendanceHandlers.handleGetCurrentAttendanceStatus(request.params.arguments);
+          
+          case 'generate_attendance_report':
+            return await this.attendanceHandlers.handleGenerateAttendanceReport(request.params.arguments);
+          
+          // Absence Tools
+          case 'get_absences':
+            return await this.absenceHandlers.handleGetAbsences(request.params.arguments);
+          
+          case 'get_employee_absence_balance':
+            return await this.absenceHandlers.handleGetEmployeeAbsenceBalance(request.params.arguments);
+          
+          case 'get_absence_types':
+            return await this.absenceHandlers.handleGetAbsenceTypes(request.params.arguments);
+          
+          case 'get_team_absence_overview':
+            return await this.absenceHandlers.handleGetTeamAbsenceOverview(request.params.arguments);
+          
+          case 'get_absence_statistics':
+            return await this.absenceHandlers.handleGetAbsenceStatistics(request.params.arguments);
+          
+          // Analytics Tools
+          case 'get_team_availability':
+            return await this.analyticsHandlers.handleGetTeamAvailability(request.params.arguments);
+          
+          // Document Management Tools
+          case 'get_document_categories':
+            return await this.documentHandlers.handleGetDocumentCategories(request.params.arguments);
+          
+          case 'get_employee_documents':
+            return await this.documentHandlers.handleGetEmployeeDocuments(request.params.arguments);
+          
+          case 'upload_document':
+            return await this.documentHandlers.handleUploadDocument(request.params.arguments);
+          
+          case 'download_document':
+            return await this.documentHandlers.handleDownloadDocument(request.params.arguments);
+          
+          case 'delete_document':
+            return await this.documentHandlers.handleDeleteDocument(request.params.arguments);
+          
+          case 'get_documents_by_category':
+            return await this.documentHandlers.handleGetDocumentsByCategory(request.params.arguments);
+          
+          // Approval Workflow Tools
+          case 'create_attendance_with_approval':
+            return await this.approvalHandlers.handleCreateAttendanceWithApproval(request.params.arguments);
+          
+          case 'get_pending_approvals':
+            return await this.approvalHandlers.handleGetPendingApprovals(request.params.arguments);
+          
+          case 'get_attendance_approval_status':
+            return await this.approvalHandlers.handleGetAttendanceApprovalStatus(request.params.arguments);
+          
+          case 'get_absence_approval_status':
+            return await this.approvalHandlers.handleGetAbsenceApprovalStatus(request.params.arguments);
+          
+          case 'get_approval_workflow_summary':
+            return await this.approvalHandlers.handleGetApprovalWorkflowSummary(request.params.arguments);
+          
+          // Utility Tools
+          case 'api_health_check':
+            return await this.utilityHandlers.handleApiHealthCheck(request.params.arguments);
+
+          default:
+            throw new McpError(
+              ErrorCode.MethodNotFound,
+              `Unknown tool: ${request.params.name}`
+            );
+        }
+      } catch (error) {
+        if (error instanceof McpError) {
+          throw error;
+        }
+        
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}`,
+            },
+          ],
+          isError: true,
+        };
+      }
+    });
+  }
+
+  async run() {
+    const transport = new StdioServerTransport();
+    await this.server.connect(transport);
+    console.error('Personio MCP server running on stdio');
+  }
+}
+
+const server = new PersonioServer();
+server.run().catch(console.error);
