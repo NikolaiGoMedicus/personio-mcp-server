@@ -9,6 +9,8 @@ export interface EmployeesArgs {
   limit?: number;
   offset?: number;
   attributes?: string[];
+  office?: string;
+  format?: 'json' | 'csv';
 }
 
 export interface SearchArgs {
@@ -54,7 +56,9 @@ export const isValidEmployeesArgs = (args: any): args is EmployeesArgs =>
   args !== null &&
   (args.limit === undefined || typeof args.limit === 'number') &&
   (args.offset === undefined || typeof args.offset === 'number') &&
-  (args.attributes === undefined || Array.isArray(args.attributes));
+  (args.attributes === undefined || Array.isArray(args.attributes)) &&
+  (args.office === undefined || typeof args.office === 'string') &&
+  (args.format === undefined || args.format === 'json' || args.format === 'csv');
 
 export const isValidSearchArgs = (args: any): args is SearchArgs =>
   typeof args === 'object' &&

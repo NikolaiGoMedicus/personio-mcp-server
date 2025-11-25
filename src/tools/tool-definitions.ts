@@ -23,7 +23,7 @@ export const toolDefinitions = [
   },
   {
     name: 'list_employees',
-    description: 'Get a list of all employees with optional filtering',
+    description: 'Get a list of all employees with optional filtering and export formats. Supports filtering by office/location and exporting to JSON or CSV formats.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -42,6 +42,15 @@ export const toolDefinitions = [
           type: 'array',
           items: { type: 'string' },
           description: 'Optional: specific attributes to retrieve',
+        },
+        office: {
+          type: 'string',
+          description: 'Optional: filter employees by office/workplace name (case-insensitive partial match)',
+        },
+        format: {
+          type: 'string',
+          enum: ['json', 'csv'],
+          description: 'Output format: "json" (default) or "csv" for spreadsheet export',
         },
       },
     },
@@ -519,6 +528,177 @@ export const toolDefinitions = [
     inputSchema: {
       type: 'object',
       properties: {},
+    },
+  },
+
+  // ====== V2 Attendance Period Tools ======
+  {
+    name: 'get_attendance_periods_v2',
+    description: 'List attendance periods using Personio v2 API with enhanced features and timezone support',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        person_id: {
+          type: 'number',
+          description: 'Filter by specific person/employee ID',
+        },
+        start_date_time: {
+          type: 'string',
+          description: 'Start datetime in ISO 8601 format (e.g., 2024-01-01T09:00:00)',
+        },
+        end_date_time: {
+          type: 'string',
+          description: 'End datetime in ISO 8601 format (e.g., 2024-01-01T17:00:00)',
+        },
+        limit: {
+          type: 'number',
+          description: 'Maximum number of records (default: 200)',
+          minimum: 1,
+          maximum: 200,
+        },
+        offset: {
+          type: 'number',
+          description: 'Number of records to skip for pagination',
+          minimum: 0,
+        },
+      },
+    },
+  },
+  {
+    name: 'get_attendance_period_v2',
+    description: 'Get a specific attendance period by ID using Personio v2 API',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: {
+          type: 'number',
+          description: 'Attendance period ID',
+        },
+      },
+      required: ['id'],
+    },
+  },
+  {
+    name: 'create_attendance_period_v2',
+    description: 'Create a new attendance period using Personio v2 API with enhanced features',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        person_id: {
+          type: 'number',
+          description: 'Person/employee ID',
+        },
+        type: {
+          type: 'string',
+          enum: ['AttendancePeriod', 'Break'],
+          description: 'Type of attendance period (default: AttendancePeriod)',
+        },
+        start_date_time: {
+          type: 'string',
+          description: 'Start datetime in ISO 8601 format (e.g., 2024-01-01T09:00:00)',
+        },
+        start_time_zone: {
+          type: 'string',
+          description: 'Start timezone (default: Europe/Berlin)',
+        },
+        end_date_time: {
+          type: 'string',
+          description: 'End datetime in ISO 8601 format (e.g., 2024-01-01T17:00:00)',
+        },
+        end_time_zone: {
+          type: 'string',
+          description: 'End timezone (default: Europe/Berlin)',
+        },
+        comment: {
+          type: 'string',
+          description: 'Optional comment',
+        },
+      },
+      required: ['person_id', 'start_date_time'],
+    },
+  },
+  {
+    name: 'update_attendance_period_v2',
+    description: 'Update an existing attendance period using Personio v2 API',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: {
+          type: 'number',
+          description: 'Attendance period ID',
+        },
+        person_id: {
+          type: 'number',
+          description: 'Person/employee ID',
+        },
+        type: {
+          type: 'string',
+          enum: ['AttendancePeriod', 'Break'],
+          description: 'Type of attendance period',
+        },
+        start_date_time: {
+          type: 'string',
+          description: 'Start datetime in ISO 8601 format',
+        },
+        start_time_zone: {
+          type: 'string',
+          description: 'Start timezone',
+        },
+        end_date_time: {
+          type: 'string',
+          description: 'End datetime in ISO 8601 format',
+        },
+        end_time_zone: {
+          type: 'string',
+          description: 'End timezone',
+        },
+        comment: {
+          type: 'string',
+          description: 'Comment (can be empty string to clear)',
+        },
+      },
+      required: ['id'],
+    },
+  },
+  {
+    name: 'delete_attendance_period_v2',
+    description: 'Delete an attendance period using Personio v2 API',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: {
+          type: 'number',
+          description: 'Attendance period ID',
+        },
+      },
+      required: ['id'],
+    },
+  },
+  {
+    name: 'generate_v1_v2_compatibility_report',
+    description: 'Generate a compatibility report comparing v1 and v2 attendance APIs to help with migration planning',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        person_id: {
+          type: 'number',
+          description: 'Optional: specific person/employee ID to analyze',
+        },
+        start_date: {
+          type: 'string',
+          description: 'Start date in YYYY-MM-DD format for comparison',
+        },
+        end_date: {
+          type: 'string',
+          description: 'End date in YYYY-MM-DD format for comparison',
+        },
+        limit: {
+          type: 'number',
+          description: 'Maximum number of records to compare (default: 50)',
+          minimum: 1,
+          maximum: 200,
+        },
+      },
     },
   },
 ];

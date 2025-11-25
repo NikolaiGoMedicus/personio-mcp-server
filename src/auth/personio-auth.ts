@@ -4,6 +4,7 @@ export interface PersonioAuthConfig {
   clientId: string;
   clientSecret: string;
   baseUrl?: string;
+  useV2Auth?: boolean; // Option to use v2 OAuth authentication
 }
 
 export interface AuthToken {
@@ -35,6 +36,20 @@ export class PersonioAuth {
    */
   async authenticate(): Promise<string> {
     try {
+      // Try v2 OAuth authentication first if enabled or for v2 endpoints
+      if (this.config.useV2Auth !== false) {
+        try {
+          return await this.authenticateV2();
+        } catch (v2Error) {
+          // If v2 fails, fall back to v1 unless explicitly v2-only
+          if (this.config.useV2Auth === true) {
+            throw v2Error;
+          }
+          console.warn('V2 authentication failed, falling back to v1:', v2Error instanceof Error ? v2Error.message : 'Unknown error');
+        }
+      }
+
+      // V1 authentication (original method)
       const response = await this.axiosInstance.post('/v1/auth', {
         client_id: this.config.clientId,
         client_secret: this.config.clientSecret,
@@ -56,6 +71,49 @@ export class PersonioAuth {
       if (axios.isAxiosError(error)) {
         const message = error.response?.data?.error?.message || error.message;
         throw new Error(`Personio authentication failed: ${message}`);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Authenticate with Personio v2 OAuth2 API
+   */
+  private async authenticateV2(): Promise<string> {
+    try {
+      // V2 uses OAuth 2.0 Client Credentials Grant
+      // Request must be URL-encoded
+      const params = new URLSearchParams();
+      params.append('grant_type', 'client_credentials');
+      params.append('client_id', this.config.clientId);
+      params.append('client_secret', this.config.clientSecret);
+
+      const response = await this.axiosInstance.post('/v2/auth/token', params, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json',
+        },
+      });
+
+      if (response.data && response.data.access_token) {
+        this.token = {
+          access_token: response.data.access_token,
+          token_type: response.data.token_type || 'Bearer',
+          expires_in: response.data.expires_in || 86400,
+          expires_at: Date.now() + ((response.data.expires_in || 86400) * 1000),
+        };
+
+        return this.token.access_token;
+      } else {
+        throw new Error('Invalid v2 authentication response from Personio API');
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const message = error.response?.data?.error?.message ||
+                       error.response?.data?.error ||
+                       error.response?.data?.message ||
+                       error.message;
+        throw new Error(`Personio v2 authentication failed: ${message}`);
       }
       throw error;
     }

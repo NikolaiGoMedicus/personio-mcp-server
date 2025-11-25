@@ -10,11 +10,12 @@ import {
   McpError,
 } from '@modelcontextprotocol/sdk/types.js';
 import { PersonioClient } from './api/personio-client.js';
-import { 
-  EmployeeHandlers, 
-  AttendanceHandlers, 
-  AbsenceHandlers, 
-  AnalyticsHandlers, 
+import {
+  EmployeeHandlers,
+  AttendanceHandlers,
+  AttendanceHandlersV2,
+  AbsenceHandlers,
+  AnalyticsHandlers,
   UtilityHandlers,
   DocumentHandlers,
   ApprovalHandlers
@@ -34,6 +35,7 @@ class PersonioServer {
   private personioClient: PersonioClient;
   private employeeHandlers: EmployeeHandlers;
   private attendanceHandlers: AttendanceHandlers;
+  private attendanceHandlersV2: AttendanceHandlersV2;
   private absenceHandlers: AbsenceHandlers;
   private analyticsHandlers: AnalyticsHandlers;
   private utilityHandlers: UtilityHandlers;
@@ -61,6 +63,7 @@ class PersonioServer {
     // Initialize handlers
     this.employeeHandlers = new EmployeeHandlers(this.personioClient);
     this.attendanceHandlers = new AttendanceHandlers(this.personioClient);
+    this.attendanceHandlersV2 = new AttendanceHandlersV2(this.personioClient);
     this.absenceHandlers = new AbsenceHandlers(this.personioClient);
     this.analyticsHandlers = new AnalyticsHandlers(this.personioClient);
     this.utilityHandlers = new UtilityHandlers(this.personioClient);
@@ -163,6 +166,25 @@ class PersonioServer {
           // Utility Tools
           case 'api_health_check':
             return await this.utilityHandlers.handleApiHealthCheck(request.params.arguments);
+
+          // V2 Attendance Period Tools
+          case 'get_attendance_periods_v2':
+            return await this.attendanceHandlersV2.handleGetAttendancePeriodsV2(request.params.arguments);
+
+          case 'get_attendance_period_v2':
+            return await this.attendanceHandlersV2.handleGetAttendancePeriodV2(request.params.arguments);
+
+          case 'create_attendance_period_v2':
+            return await this.attendanceHandlersV2.handleCreateAttendancePeriodV2(request.params.arguments);
+
+          case 'update_attendance_period_v2':
+            return await this.attendanceHandlersV2.handleUpdateAttendancePeriodV2(request.params.arguments);
+
+          case 'delete_attendance_period_v2':
+            return await this.attendanceHandlersV2.handleDeleteAttendancePeriodV2(request.params.arguments);
+
+          case 'generate_v1_v2_compatibility_report':
+            return await this.attendanceHandlersV2.handleGenerateV1V2CompatibilityReport(request.params.arguments);
 
           default:
             throw new McpError(

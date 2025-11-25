@@ -1,6 +1,7 @@
 import { ErrorCode, McpError } from '@modelcontextprotocol/sdk/types.js';
 import { PersonioClient } from '../api/personio-client.js';
 import { isValidEmployeeArgs, isValidEmployeesArgs, isValidSearchArgs } from '../validators/index.js';
+import { employeesToCsv, formatCsvExport } from '../utils/export-helpers.js';
 
 export class EmployeeHandlers {
   constructor(private personioClient: PersonioClient) {}
@@ -32,12 +33,29 @@ export class EmployeeHandlers {
       limit: args?.limit || 200,
       offset: args?.offset || 0,
       attributes: args?.attributes,
+      office: args?.office,
     });
 
-    const formattedEmployees = response.data.map(emp => 
+    const formattedEmployees = response.data.map(emp =>
       this.personioClient.formatEmployeeData(emp)
     );
 
+    // Handle CSV export format
+    if (args?.format === 'csv') {
+      const csv = employeesToCsv(formattedEmployees);
+      const csvWithMetadata = formatCsvExport(csv, formattedEmployees.length);
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: csvWithMetadata,
+          },
+        ],
+      };
+    }
+
+    // Default JSON format
     return {
       content: [
         {
