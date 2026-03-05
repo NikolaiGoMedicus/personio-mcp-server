@@ -1,18 +1,24 @@
 {
-  "name": "personio-mcp-server",
-  "version": "0.1.0",
-  "description": "A Model Context Protocol server for Personio HR API integration",
-  "private": true,
+  "name": "@gomedicus/personio-mcp-server",
+  "version": "1.0.0",
+  "description": "A Model Context Protocol server for Personio HR API integration with 52 HR automation tools",
+  "private": false,
   "type": "module",
   "bin": {
-    "personio-mcp-server": "./build/index.js"
+    "personio-mcp-server": "./build/index.js",
+    "personio-mcp-setup": "./scripts/setup.mjs"
   },
   "files": [
-    "build"
+    "build",
+    "scripts/setup.mjs",
+    "scripts/postinstall.js",
+    "CLAUDE.md"
   ],
   "scripts": {
     "build": "tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
     "prepare": "npm run build",
+    "postinstall": "node scripts/postinstall.js",
+    "setup": "node scripts/setup.mjs",
     "watch": "tsc --watch",
     "inspector": "npx @modelcontextprotocol/inspector build/index.js",
     "start": "node build/index.js",

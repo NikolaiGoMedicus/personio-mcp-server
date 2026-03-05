@@ -3,12 +3,25 @@
 ## Project Overview
 MCP server exposing the Personio HR API as callable tools for Claude/AI assistants. TypeScript, ESM, compiled to `./build`.
 
+**Status**: ✅ v1.0.0 - Production Ready & NPM Package Prepared
+**Repository**: https://github.com/NikolaiGoMedicus/personio-mcp-server
+**NPM Package**: `@gomedicus/personio-mcp-server` (ready to publish)
+
 ## Quick Commands
 ```bash
+# Development
 npm run build          # Compile TypeScript → build/
 npm test               # Smoke tests (requires API credentials in .env)
 npm start              # Run compiled server
 npm run inspector      # Run with MCP inspector
+
+# Package Management
+npm run setup          # Interactive setup wizard for Claude Desktop
+npm publish            # Publish to npm registry (requires auth)
+
+# User Installation (after publishing)
+npm install -g @gomedicus/personio-mcp-server
+personio-mcp-setup     # Automated setup wizard
 ```
 
 ## Architecture
@@ -74,3 +87,58 @@ Recruiting filter parameters were using wrong API parameter names, causing filte
 - Recruiting handlers return `{ isError: true }` result objects instead of throwing (graceful degradation)
 - V2 Attendance handlers mix both: catch 403 → return error result, other errors → throw `McpError`
 - Document handlers throw on all errors (no try/catch for 404s)
+
+---
+
+## NPM Package Distribution
+
+### Current Status (v1.0.0 - 2026-03-05)
+
+**✅ Completed:**
+1. Package configuration updated (`@gomedicus/personio-mcp-server`)
+2. `.npmignore` created (ships only `build/`, `scripts/`, `CLAUDE.md`)
+3. Interactive setup wizard (`scripts/setup.mjs`)
+   - Prompts for Personio credentials
+   - Auto-detects Claude Desktop config path (macOS/Windows/Linux)
+   - Automatically configures MCP server
+4. Post-install script (`scripts/postinstall.js`)
+   - Shows setup instructions after installation
+5. README updated with NPM installation docs
+
+**🔄 Pending:**
+1. **Publishing Decision**: GitHub Packages vs NPM Registry
+   - **GitHub Packages**: Free for private org packages, access control via GitHub
+   - **NPM Registry**: Standard workflow, $7/month for private packages
+2. **GitHub Actions**: Automated publishing on release tags
+3. **First publish**: `npm publish` (requires npm login + org access)
+
+### Installation Flow (After Publishing)
+
+**For GoMedicus Team Members:**
+```bash
+# 1. Install globally
+npm install -g @gomedicus/personio-mcp-server
+
+# 2. Run setup wizard
+personio-mcp-setup
+# → Prompts for Personio Client ID & Secret
+# → Automatically updates Claude Desktop config
+# → Verifies installation
+
+# 3. Restart Claude Desktop
+# Done! All 52 Personio tools available in Claude
+```
+
+### Package Contents
+- `build/` - Compiled TypeScript (ESM)
+- `scripts/setup.mjs` - Interactive setup wizard
+- `scripts/postinstall.js` - Post-install messaging
+- `CLAUDE.md` - This documentation
+- `README.md` - User-facing documentation
+
+### Next Steps
+1. Decide: GitHub Packages or NPM Registry?
+2. Setup npm authentication (`npm login`)
+3. First publish: `npm publish --access public` (or `--access restricted` for private)
+4. Document internal distribution in GoMedicus Notion
+5. (Optional) Setup GitHub Actions for automated releases
