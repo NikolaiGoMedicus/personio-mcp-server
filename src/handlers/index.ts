@@ -6,3 +6,4 @@ export * from './analytics-handlers.js';
 export * from './utility-handlers.js';
 export * from './document-handlers.js';
 export * from './approval-handlers.js';
+export * from './recruiting-handlers.js';

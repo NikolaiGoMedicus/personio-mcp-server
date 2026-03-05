@@ -674,6 +674,181 @@ export const toolDefinitions = [
       required: ['id'],
     },
   },
+  // ====== V2 Recruiting Tools ======
+  {
+    name: 'list_recruiting_applications',
+    description: 'List all recruiting applications with optional filtering by date range or email. Uses cursor-based pagination (V2 Recruiting API, Beta).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        limit: {
+          type: 'number',
+          description: 'Maximum number of applications to return (1-200, default 100)',
+          minimum: 1,
+          maximum: 200,
+        },
+        cursor: {
+          type: 'string',
+          description: 'Cursor for pagination (from next_cursor in previous response)',
+        },
+        updated_at_after: {
+          type: 'string',
+          description: 'Filter: return applications updated after this datetime (format: YYYY-MM-DDTHH:mm:ss without timezone, e.g. 2024-01-01T00:00:00). Cannot be combined with updated_at_before.',
+        },
+        updated_at_before: {
+          type: 'string',
+          description: 'Filter: return applications updated before this datetime (format: YYYY-MM-DDTHH:mm:ss without timezone, e.g. 2024-12-31T23:59:59). Cannot be combined with updated_at_after.',
+        },
+        candidate_email: {
+          type: 'string',
+          description: 'Filter: return applications for candidate with this email address',
+        },
+      },
+    },
+  },
+  {
+    name: 'get_recruiting_application',
+    description: 'Get detailed information about a specific recruiting application by ID (V2 Recruiting API, Beta)',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        application_id: {
+          type: 'string',
+          description: 'Application ID',
+        },
+      },
+      required: ['application_id'],
+    },
+  },
+  {
+    name: 'list_application_stage_transitions',
+    description: 'List the stage transition history for a specific recruiting application (V2 Recruiting API, Beta)',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        application_id: {
+          type: 'string',
+          description: 'Application ID',
+        },
+      },
+      required: ['application_id'],
+    },
+  },
+  {
+    name: 'list_application_documents',
+    description: 'List all documents (CV, cover letter, etc.) attached to a recruiting application. Uses the application_id as owner to query the Document Management API.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        application_id: {
+          type: 'string',
+          description: 'Application ID (the owner of the documents)',
+        },
+        category_id: {
+          type: 'string',
+          description: 'Optional: filter by document category ID',
+        },
+        limit: {
+          type: 'number',
+          description: 'Maximum number of documents to return (1-200, default 100)',
+          minimum: 1,
+          maximum: 200,
+        },
+        cursor: {
+          type: 'string',
+          description: 'Cursor for pagination',
+        },
+      },
+      required: ['application_id'],
+    },
+  },
+  {
+    name: 'download_application_document',
+    description: 'Download a recruiting application document (CV, cover letter, etc.) by document ID. Returns base64-encoded file content.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        document_id: {
+          type: 'string',
+          description: 'Document ID (from list_application_documents)',
+        },
+      },
+      required: ['document_id'],
+    },
+  },
+  {
+    name: 'list_recruiting_candidates',
+    description: 'List all recruiting candidates with cursor-based pagination (V2 Recruiting API, Beta)',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        limit: {
+          type: 'number',
+          description: 'Maximum number of candidates to return',
+          minimum: 1,
+        },
+        cursor: {
+          type: 'string',
+          description: 'Cursor for pagination (from next_cursor in previous response)',
+        },
+      },
+    },
+  },
+  {
+    name: 'get_recruiting_candidate',
+    description: 'Get detailed information about a specific recruiting candidate by ID (V2 Recruiting API, Beta)',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        candidate_id: {
+          type: 'string',
+          description: 'Candidate ID',
+        },
+      },
+      required: ['candidate_id'],
+    },
+  },
+  {
+    name: 'list_recruiting_jobs',
+    description: 'List all recruiting job postings with cursor-based pagination (V2 Recruiting API, Beta)',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        limit: {
+          type: 'number',
+          description: 'Maximum number of jobs to return',
+          minimum: 1,
+        },
+        cursor: {
+          type: 'string',
+          description: 'Cursor for pagination (from next_cursor in previous response)',
+        },
+      },
+    },
+  },
+  {
+    name: 'get_recruiting_job',
+    description: 'Get detailed information about a specific recruiting job posting by ID (V2 Recruiting API, Beta)',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        job_id: {
+          type: 'string',
+          description: 'Job ID',
+        },
+      },
+      required: ['job_id'],
+    },
+  },
+  {
+    name: 'list_recruiting_categories',
+    description: 'List all recruiting job categories (V2 Recruiting API, Beta)',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+    },
+  },
+
   {
     name: 'generate_v1_v2_compatibility_report',
     description: 'Generate a compatibility report comparing v1 and v2 attendance APIs to help with migration planning',

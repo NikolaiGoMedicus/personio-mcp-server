@@ -1,0 +1,76 @@
+# Personio MCP Server
+
+## Project Overview
+MCP server exposing the Personio HR API as callable tools for Claude/AI assistants. TypeScript, ESM, compiled to `./build`.
+
+## Quick Commands
+```bash
+npm run build          # Compile TypeScript → build/
+npm test               # Smoke tests (requires API credentials in .env)
+npm start              # Run compiled server
+npm run inspector      # Run with MCP inspector
+```
+
+## Architecture
+
+### File Structure
+```
+src/
+├── index.ts                          # MCP server, tool routing (switch/case)
+├── api/personio-client.ts            # Centralized HTTP client (axios), v1+v2 API
+├── auth/personio-auth.ts             # OAuth token management, auto-refresh
+├── handlers/
+│   ├── index.ts                      # Re-exports all handler classes
+│   ├── employee-handlers.ts          # get, list, search
+│   ├── attendance-handlers.ts        # v1: records, status, report
+│   ├── attendance-handlers-v2.ts     # v2: CRUD + compatibility report
+│   ├── absence-handlers.ts           # list, balance, types, overview, stats
+│   ├── analytics-handlers.ts         # team availability (attendance + absence)
+│   ├── document-handlers.ts          # categories, employee docs, upload/download
+│   ├── approval-handlers.ts          # pending, attendance/absence status, summary
+│   ├── recruiting-handlers.ts        # v2 recruiting API (apps, candidates, jobs)
+│   └── utility-handlers.ts           # health check
+├── tools/tool-definitions.ts         # All 52 tool schemas (JSON Schema)
+├── validators/index.ts               # Input validation functions
+└── utils/export-helpers.ts           # CSV export
+test-smoke.mjs                        # Smoke test suite (no framework)
+```
+
+### Patterns
+- **Handler classes** take `PersonioClient` in constructor, expose `handle*` methods
+- **All handlers** return `{ content: [{ type: 'text', text: JSON.stringify(...) }] }` (MCP protocol)
+- **Error responses** set `isError: true` on the result object
+- **Recruiting handlers** catch 403 errors gracefully (scope may be missing)
+- **V2 Attendance handlers** catch 403 and suggest v1 fallback
+- **ID cascading** in tests: list calls provide IDs for get calls
+
+### API Versions
+- **v1**: `/v1/company/employees`, `/v1/company/attendances`, `/v1/company/time-offs`, etc.
+- **v2**: `/v2/attendance-periods`, `/v2/recruiting/*`, `/v2/document-management/*`
+- v2 recruiting uses Beta header; v2 auth is OAuth2 Client Credentials at `/v2/auth/token`
+
+## Testing
+
+### Smoke Tests (`test-smoke.mjs`)
+- **31 tests**, 10 groups, ~15-20s runtime
+- READ-ONLY: no create/update/delete
+- Runs against live Personio API (needs `PERSONIO_CLIENT_ID` + `PERSONIO_CLIENT_SECRET` in `.env`)
+- Tolerates 403 (scope missing) and 404 (route unavailable) as "pass"
+- Tests cover all read endpoints including recruiting filter regression tests
+
+### Known API Behaviors
+- **Employee documents endpoint** (`/v1/company/employees/{id}/documents`) returns 404 for some employees — the route may not be available for all plans/employees
+- **Recruiting `updated_at` filters** (`updated_at_after`/`updated_at_before`) may return API errors depending on API version/plan — the test tolerates this
+- **V2 Attendance** may return 403 if API credentials lack the v2 attendance scope — test skips gracefully
+- **Recruiting endpoints** may return 403 if credentials lack `personio:recruiting:read` scope
+
+## Findings & Bug History
+
+### Recruiting Filter Bug (fixed)
+Recruiting filter parameters were using wrong API parameter names, causing filters to be silently ignored. The smoke test group "Recruiting Filters (Regression)" specifically guards against this regression with `candidate_email` and `updated_at_after`/`updated_at_before` filter tests.
+
+### Error Handling Inconsistency
+- Most handlers throw `McpError` on failure (caught by the server's outer try/catch)
+- Recruiting handlers return `{ isError: true }` result objects instead of throwing (graceful degradation)
+- V2 Attendance handlers mix both: catch 403 → return error result, other errors → throw `McpError`
+- Document handlers throw on all errors (no try/catch for 404s)

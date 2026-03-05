@@ -5,6 +5,7 @@ export interface PersonioAuthConfig {
   clientSecret: string;
   baseUrl?: string;
   useV2Auth?: boolean; // Option to use v2 OAuth authentication
+  scopes?: string[]; // OAuth2 scopes to request (e.g., 'personio:recruiting:read')
 }
 
 export interface AuthToken {
@@ -87,6 +88,9 @@ export class PersonioAuth {
       params.append('grant_type', 'client_credentials');
       params.append('client_id', this.config.clientId);
       params.append('client_secret', this.config.clientSecret);
+      if (this.config.scopes && this.config.scopes.length > 0) {
+        params.append('scope', this.config.scopes.join(' '));
+      }
 
       const response = await this.axiosInstance.post('/v2/auth/token', params, {
         headers: {
