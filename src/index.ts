@@ -88,7 +88,7 @@ class PersonioServer {
       tools: toolDefinitions,
     }));
 
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    this.server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
       try {
         switch (request.params.name) {
           // Employee Tools
