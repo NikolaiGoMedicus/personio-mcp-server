@@ -1,12 +1,12 @@
 {
   "name": "@gomedicus/personio-mcp-server",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A Model Context Protocol server for Personio HR API integration with 52 HR automation tools",
   "private": false,
   "type": "module",
   "bin": {
-    "personio-mcp-server": "./build/index.js",
-    "personio-mcp-setup": "./scripts/setup.mjs"
+    "personio-mcp-server": "build/index.js",
+    "personio-mcp-setup": "scripts/setup.mjs"
   },
   "files": [
     "build",
