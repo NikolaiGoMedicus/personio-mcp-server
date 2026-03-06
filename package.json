@@ -49,8 +49,5 @@
     "mcp",
     "model-context-protocol"
   ],
-  "license": "MIT",
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
-  }
+  "license": "MIT"
 }
