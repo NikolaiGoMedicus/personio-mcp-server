@@ -239,6 +239,8 @@ export class PersonioClient {
       params.attributes.forEach(attr => queryParams.append('attributes[]', attr));
     }
 
+    // console.log(`Fetching employees with attributes ${queryParams.toString()}`);
+
     const response = await this.axiosInstance.get(`/v1/company/employees?${queryParams}`);
 
     // Client-side filtering by office if specified
@@ -262,6 +264,8 @@ export class PersonioClient {
     if (attributes) {
       attributes.forEach(attr => queryParams.append('attributes[]', attr));
     }
+
+    // console.log(`Fetching employee with ID ${employeeId} and attributes ${attributes?.join(', ') || 'all'}`);
 
     const response = await this.axiosInstance.get(`/v1/company/employees/${employeeId}?${queryParams}`);
     return response.data;
@@ -444,8 +448,7 @@ export class PersonioClient {
         departmentName = attrs.department.value;
       }
     }
-
-    return {
+    const employeeData: any = {
       id: attrs.id?.value,
       name: `${attrs.first_name?.value || ''} ${attrs.last_name?.value || ''}`.trim(),
       email: attrs.email?.value,
@@ -457,6 +460,14 @@ export class PersonioClient {
       weekly_hours: attrs.weekly_working_hours?.value,
       shoe_size: attrs.dynamic_14285869?.value || null,
     };
+
+    for(let key in attrs) {
+      if (!employeeData[key] && attrs[key]?.value) {
+        employeeData[key] = attrs[key].value;
+      }
+    }
+
+    return employeeData;
   }
 
   // Helper method to format attendance data
