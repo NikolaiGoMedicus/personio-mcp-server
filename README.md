@@ -18,6 +18,33 @@ A Model Context Protocol (MCP) server for integrating with the Personio HR API. 
 
 ## Installation
 
+### Quick Install (Recommended for GoMedicus Team)
+
+Install the package globally via npm:
+
+```bash
+npm install -g @gomedicus/personio-mcp-server
+```
+
+Then run the setup wizard:
+
+```bash
+personio-mcp-setup
+```
+
+The setup wizard will:
+- Ask for your Personio API credentials
+- Automatically configure Claude Desktop
+- Verify the installation
+
+**That's it!** Restart Claude Desktop and the Personio tools will be available.
+
+---
+
+### Manual Installation (Development)
+
+For development or manual setup:
+
 1. Clone this repository
 2. Install dependencies:
 

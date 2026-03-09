@@ -1,0 +1,23 @@
+# Source files (only ship built files)
+src/
+tsconfig.json
+
+# Development files
+*.log
+test-*.mjs
+.env*
+.DS_Store
+
+# Documentation (keep README.md, include CLAUDE.md)
+# README.md is automatically included
+
+# IDE
+.vscode/
+.idea/
+
+# Git
+.git/
+.gitignore
+
+# CI/CD
+.github/

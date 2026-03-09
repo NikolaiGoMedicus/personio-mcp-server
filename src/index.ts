@@ -18,7 +18,8 @@ import {
   AnalyticsHandlers,
   UtilityHandlers,
   DocumentHandlers,
-  ApprovalHandlers
+  ApprovalHandlers,
+  RecruitingHandlers
 } from './handlers/index.js';
 import { toolDefinitions } from './tools/tool-definitions.js';
 
@@ -41,6 +42,7 @@ class PersonioServer {
   private utilityHandlers: UtilityHandlers;
   private documentHandlers: DocumentHandlers;
   private approvalHandlers: ApprovalHandlers;
+  private recruitingHandlers: RecruitingHandlers;
 
   constructor() {
     this.server = new Server(
@@ -69,6 +71,7 @@ class PersonioServer {
     this.utilityHandlers = new UtilityHandlers(this.personioClient);
     this.documentHandlers = new DocumentHandlers(this.personioClient);
     this.approvalHandlers = new ApprovalHandlers(this.personioClient);
+    this.recruitingHandlers = new RecruitingHandlers(this.personioClient);
 
     this.setupToolHandlers();
     
@@ -85,7 +88,7 @@ class PersonioServer {
       tools: toolDefinitions,
     }));
 
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    this.server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
       try {
         switch (request.params.name) {
           // Employee Tools
@@ -185,6 +188,37 @@ class PersonioServer {
 
           case 'generate_v1_v2_compatibility_report':
             return await this.attendanceHandlersV2.handleGenerateV1V2CompatibilityReport(request.params.arguments);
+
+          // Recruiting Tools
+          case 'list_recruiting_applications':
+            return await this.recruitingHandlers.handleListRecruitingApplications(request.params.arguments);
+
+          case 'get_recruiting_application':
+            return await this.recruitingHandlers.handleGetRecruitingApplication(request.params.arguments);
+
+          case 'list_application_stage_transitions':
+            return await this.recruitingHandlers.handleListApplicationStageTransitions(request.params.arguments);
+
+          case 'list_application_documents':
+            return await this.recruitingHandlers.handleListApplicationDocuments(request.params.arguments);
+
+          case 'download_application_document':
+            return await this.recruitingHandlers.handleDownloadApplicationDocument(request.params.arguments);
+
+          case 'list_recruiting_candidates':
+            return await this.recruitingHandlers.handleListRecruitingCandidates(request.params.arguments);
+
+          case 'get_recruiting_candidate':
+            return await this.recruitingHandlers.handleGetRecruitingCandidate(request.params.arguments);
+
+          case 'list_recruiting_jobs':
+            return await this.recruitingHandlers.handleListRecruitingJobs(request.params.arguments);
+
+          case 'get_recruiting_job':
+            return await this.recruitingHandlers.handleGetRecruitingJob(request.params.arguments);
+
+          case 'list_recruiting_categories':
+            return await this.recruitingHandlers.handleListRecruitingCategories(request.params.arguments);
 
           default:
             throw new McpError(

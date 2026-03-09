@@ -178,6 +178,95 @@ export interface Document {
   };
 }
 
+// V2 Recruiting API Response interface (uses _data/_meta with underscore prefix)
+export interface PersonioRecruitingResponse<T = any> {
+  _data: T;
+  _meta?: {
+    links?: {
+      next?: { href: string };
+    };
+  };
+}
+
+// Recruiting interfaces (matching actual V2 Recruiting API response shapes)
+export interface RecruitingApplication {
+  id: string;
+  application_date: string;
+  candidate: {
+    id: string;
+    email: string;
+    first_name: string;
+    last_name: string;
+    gender?: string;
+  };
+  job: {
+    id: string;
+    name: string;
+    department?: { id: string; name: string };
+    category?: any;
+  };
+  current_stage: {
+    id: string | null;
+    kind: string;
+    name: string | null;
+    type: string;
+  };
+  channel?: { id: string; name: string };
+  hiring_team?: any;
+  is_anonymized: boolean;
+  created_at: { 'date-time': string; timezone: string };
+  updated_at: { 'date-time': string; timezone: string };
+  [key: string]: any;
+}
+
+export interface RecruitingCandidate {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  gender?: string;
+  phone?: string;
+  location?: string;
+  birthday?: string;
+  linkedin_profile?: string;
+  available_from?: string;
+  applications?: { id: string; application_date: string }[];
+  created_at: string;
+  updated_at: string;
+  [key: string]: any;
+}
+
+export interface RecruitingJob {
+  id: string;
+  name: string;
+  department?: { id: string; name: string };
+  category?: any;
+  hiring_team?: any[];
+  company?: { id: string };
+  created_at: { 'date-time': string; timezone: string };
+  updated_at: { 'date-time': string; timezone: string };
+  [key: string]: any;
+}
+
+export interface RecruitingStageTransition {
+  entered_at: { 'date-time': string; timezone: string };
+  stage: {
+    id: string | null;
+    kind: string;
+    name: string | null;
+    type: string;
+  };
+  [key: string]: any;
+}
+
+export interface RecruitingCategory {
+  id: string;
+  name: string;
+  stages?: any[];
+  company?: { id: string };
+  [key: string]: any;
+}
+
 export interface UploadDocumentParams {
   title: string;
   employee_id: number;
@@ -650,6 +739,253 @@ export class PersonioClient {
         time_zone: 'Europe/Berlin',
       } : undefined,
       comment: v1Attendance.comment,
+    };
+  }
+
+  // ====== V2 Recruiting API Methods ======
+
+  // Private helper for recruiting GET requests (sets Beta: true header)
+  // Normalizes response to always use { _data, _meta } shape regardless of API variations
+  private async recruitingGet<T>(path: string, params?: URLSearchParams): Promise<PersonioRecruitingResponse<T>> {
+    try {
+      const url = params && params.toString() ? `${path}?${params}` : path;
+      const response = await this.axiosInstance.get(url, {
+        headers: { 'Beta': 'true' },
+      });
+
+      const body = response.data;
+
+      // Normalize: API may use _data (list endpoints) or data (single/some endpoints)
+      if (body._data !== undefined) {
+        return body;
+      }
+      if (body.data !== undefined) {
+        return { _data: body.data, _meta: body._meta || body.meta };
+      }
+      // Fallback: response body IS the data (no wrapper)
+      return { _data: body as T, _meta: undefined };
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 403) {
+        throw new Error(
+          `Recruiting API access denied. Ensure your API credentials have the 'personio:recruiting:read' scope. ` +
+          `Error: ${error.response?.data?.error?.message || error.response?.data?.message || error.message}`
+        );
+      }
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
+        throw new Error(`Not found: ${path}`);
+      }
+      throw error;
+    }
+  }
+
+  // List recruiting applications
+  async getRecruitingApplications(params?: {
+    limit?: number;
+    cursor?: string;
+    updated_at_after?: string;
+    updated_at_before?: string;
+    candidate_email?: string;
+  }): Promise<PersonioRecruitingResponse<RecruitingApplication[]>> {
+    const queryParams = new URLSearchParams();
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.cursor) queryParams.append('cursor', params.cursor);
+    if (params?.updated_at_after) queryParams.append('updated_at.gt', params.updated_at_after);
+    if (params?.updated_at_before) queryParams.append('updated_at.lt', params.updated_at_before);
+    if (params?.candidate_email) queryParams.append('candidate.email', params.candidate_email);
+    return this.recruitingGet<RecruitingApplication[]>('/v2/recruiting/applications', queryParams);
+  }
+
+  // Get single recruiting application
+  async getRecruitingApplication(id: string): Promise<PersonioRecruitingResponse<RecruitingApplication>> {
+    return this.recruitingGet<RecruitingApplication>(`/v2/recruiting/applications/${id}`);
+  }
+
+  // List stage transitions for an application
+  async getApplicationStageTransitions(applicationId: string): Promise<PersonioRecruitingResponse<RecruitingStageTransition[]>> {
+    return this.recruitingGet<RecruitingStageTransition[]>(`/v2/recruiting/applications/${applicationId}/stage-transitions`);
+  }
+
+  // List recruiting candidates
+  async getRecruitingCandidates(params?: {
+    limit?: number;
+    cursor?: string;
+  }): Promise<PersonioRecruitingResponse<RecruitingCandidate[]>> {
+    const queryParams = new URLSearchParams();
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.cursor) queryParams.append('cursor', params.cursor);
+    return this.recruitingGet<RecruitingCandidate[]>('/v2/recruiting/candidates', queryParams);
+  }
+
+  // Get single recruiting candidate
+  async getRecruitingCandidate(id: string): Promise<PersonioRecruitingResponse<RecruitingCandidate>> {
+    return this.recruitingGet<RecruitingCandidate>(`/v2/recruiting/candidates/${id}`);
+  }
+
+  // List recruiting jobs
+  async getRecruitingJobs(params?: {
+    limit?: number;
+    cursor?: string;
+  }): Promise<PersonioRecruitingResponse<RecruitingJob[]>> {
+    const queryParams = new URLSearchParams();
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.cursor) queryParams.append('cursor', params.cursor);
+    return this.recruitingGet<RecruitingJob[]>('/v2/recruiting/jobs', queryParams);
+  }
+
+  // Get single recruiting job
+  async getRecruitingJob(id: string): Promise<PersonioRecruitingResponse<RecruitingJob>> {
+    return this.recruitingGet<RecruitingJob>(`/v2/recruiting/jobs/${id}`);
+  }
+
+  // List recruiting categories
+  async getRecruitingCategories(): Promise<PersonioRecruitingResponse<RecruitingCategory[]>> {
+    return this.recruitingGet<RecruitingCategory[]>('/v2/recruiting/categories');
+  }
+
+  // Recruiting formatter methods
+  formatRecruitingApplication(app: any): any {
+    if (!app) return app;
+    return {
+      id: app.id,
+      application_date: app.application_date,
+      candidate: app.candidate ? {
+        id: app.candidate.id,
+        name: `${app.candidate.first_name || ''} ${app.candidate.last_name || ''}`.trim(),
+        email: app.candidate.email,
+        gender: app.candidate.gender,
+      } : null,
+      job: app.job ? {
+        id: app.job.id,
+        name: app.job.name,
+        department: app.job.department?.name,
+      } : null,
+      current_stage: app.current_stage ? {
+        name: app.current_stage.name,
+        type: app.current_stage.type,
+      } : null,
+      channel: app.channel?.name,
+      is_anonymized: app.is_anonymized,
+      created_at: app.created_at?.['date-time'] || app.created_at,
+      updated_at: app.updated_at?.['date-time'] || app.updated_at,
+    };
+  }
+
+  formatRecruitingCandidate(candidate: any): any {
+    if (!candidate) return candidate;
+    return {
+      id: candidate.id,
+      first_name: candidate.first_name,
+      last_name: candidate.last_name,
+      name: `${candidate.first_name || ''} ${candidate.last_name || ''}`.trim(),
+      email: candidate.email,
+      gender: candidate.gender,
+      phone: candidate.phone,
+      location: candidate.location,
+      linkedin_profile: candidate.linkedin_profile,
+      applications: candidate.applications?.map((a: any) => ({
+        id: a.id,
+        application_date: a.application_date,
+      })),
+      created_at: candidate.created_at,
+      updated_at: candidate.updated_at,
+    };
+  }
+
+  formatRecruitingJob(job: any): any {
+    if (!job) return job;
+    return {
+      id: job.id,
+      name: job.name,
+      department: job.department?.name,
+      category: job.category?.name || job.category,
+      hiring_team: job.hiring_team?.map((h: any) => ({
+        person_id: h.person?.id,
+        role: h.role?.name,
+      })),
+      created_at: job.created_at?.['date-time'] || job.created_at,
+      updated_at: job.updated_at?.['date-time'] || job.updated_at,
+    };
+  }
+
+  formatStageTransition(transition: any): any {
+    if (!transition) return transition;
+    return {
+      stage_name: transition.stage?.name,
+      stage_type: transition.stage?.type,
+      stage_kind: transition.stage?.kind,
+      entered_at: transition.entered_at?.['date-time'] || transition.entered_at,
+    };
+  }
+
+  formatRecruitingCategory(category: any): any {
+    if (!category) return category;
+    return {
+      id: category.id,
+      name: category.name,
+      stages: category.stages?.map((s: any) => ({
+        id: s.id,
+        name: s.name,
+        type: s.type,
+        kind: s.kind,
+      })),
+    };
+  }
+
+  // ====== V2 Document Management API (for recruiting documents) ======
+
+  // List documents for an application (uses application_id as owner_id)
+  // Uses Document Management API (NOT the Recruiting API) — no Beta header, default scope
+  async getApplicationDocuments(applicationId: string, params?: {
+    category_id?: string;
+    limit?: number;
+    cursor?: string;
+  }): Promise<PersonioRecruitingResponse<any[]>> {
+    const queryParams = new URLSearchParams();
+    queryParams.append('owner_id', applicationId);
+    if (params?.category_id) queryParams.append('category_id', params.category_id);
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.cursor) queryParams.append('cursor', params.cursor);
+
+    // Use a fresh axios instance to avoid the global error interceptor
+    const authHeader = await this.auth.getAuthHeader();
+    const response = await axios.get(`${this.baseUrl}/v2/document-management/documents?${queryParams}`, {
+      headers: { ...authHeader, Accept: 'application/json' },
+      timeout: 30000,
+    });
+    const body = response.data;
+    if (body._data !== undefined) return body;
+    if (body.data !== undefined) return { _data: body.data, _meta: body._meta || body.meta };
+    return { _data: body as any[], _meta: undefined };
+  }
+
+  // Download a document by ID (returns binary Buffer)
+  // Uses Document Management API — no Beta header, default scope
+  async downloadApplicationDocument(documentId: string): Promise<Buffer> {
+    const authHeader = await this.auth.getAuthHeader();
+    const response = await axios.get(
+      `${this.baseUrl}/v2/document-management/documents/${documentId}/download`,
+      {
+        headers: { ...authHeader },
+        responseType: 'arraybuffer',
+        timeout: 60000,
+      }
+    );
+    return Buffer.from(response.data);
+  }
+
+  formatApplicationDocument(doc: any): any {
+    if (!doc) return doc;
+    return {
+      id: doc.id,
+      name: doc.name,
+      date: doc.date,
+      comment: doc.comment,
+      category_id: doc.category?.id,
+      owner_id: doc.owner?.id,
+      document_type: doc.document_type,
+      size: doc.size,
+      created_at: doc.created_at,
+      virus_scan_status: doc.virus_scan?.status,
     };
   }
 
