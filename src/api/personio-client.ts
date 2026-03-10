@@ -157,6 +157,7 @@ export interface DocumentCategory {
   };
 }
 
+// V1 Document interface (legacy, kept for reference)
 export interface Document {
   type: string;
   attributes: {
@@ -176,6 +177,21 @@ export interface Document {
     file_size: number;
     file_type: string;
   };
+}
+
+// V2 Document interface (Document Management API)
+export interface DocumentV2 {
+  id: string;
+  name: string;
+  date: string;
+  comment: string | null;
+  category: { id: string };
+  owner: { id: string };
+  document_type: string;
+  size: number;
+  created_at: string;
+  virus_scan?: { status: string };
+  esignature?: { status: string };
 }
 
 // V2 Recruiting API Response interface (uses _data/_meta with underscore prefix)
@@ -417,32 +433,39 @@ export class PersonioClient {
   }
 
   async getEmployeeDocuments(employeeId: number, params?: {
-    category_id?: number;
+    category_id?: string;
     limit?: number;
-    offset?: number;
-  }): Promise<PersonioApiResponse<Document[]>> {
+    cursor?: string;
+  }): Promise<{ _data: DocumentV2[]; _meta?: any }> {
     const queryParams = new URLSearchParams();
-    
+    queryParams.append('owner_id', employeeId.toString());
+
     if (params?.category_id) queryParams.append('category_id', params.category_id.toString());
     if (params?.limit) queryParams.append('limit', params.limit.toString());
-    if (params?.offset) queryParams.append('offset', params.offset.toString());
+    if (params?.cursor) queryParams.append('cursor', params.cursor);
 
-    const response = await this.axiosInstance.get(`/v1/company/employees/${employeeId}/documents?${queryParams}`);
-    return response.data;
+    const authHeader = await this.auth.getAuthHeader();
+    const response = await axios.get(`${this.baseUrl}/v2/document-management/documents?${queryParams}`, {
+      headers: { ...authHeader, Accept: 'application/json' },
+      timeout: 30000,
+    });
+    const body = response.data;
+    if (body._data !== undefined) return body;
+    if (body.data !== undefined) return { _data: body.data, _meta: body._meta || body.meta };
+    return { _data: body as any[], _meta: undefined };
   }
 
+  // NOTE: V2 Document Management API has no upload endpoint.
+  // This uses the V1 endpoint which may not be available on all Personio plans.
   async uploadDocument(params: UploadDocumentParams): Promise<PersonioApiResponse<Document>> {
     const formData = new FormData();
     formData.append('title', params.title);
     formData.append('employee_id', params.employee_id.toString());
     formData.append('category_id', params.category_id.toString());
-    
-    // Handle file upload - this would need proper file handling in a real implementation
+
     if (typeof params.file === 'string') {
-      // Base64 or file path handling
       formData.append('file', params.file);
     } else {
-      // Buffer handling
       const blob = new Blob([params.file]);
       formData.append('file', blob, params.file_name);
     }
@@ -455,16 +478,29 @@ export class PersonioClient {
     return response.data;
   }
 
-  async downloadDocument(documentId: number): Promise<Buffer> {
-    const response = await this.axiosInstance.get(`/v1/company/documents/${documentId}/download`, {
-      responseType: 'arraybuffer',
-    });
+  async downloadDocument(documentId: string): Promise<Buffer> {
+    const authHeader = await this.auth.getAuthHeader();
+    const response = await axios.get(
+      `${this.baseUrl}/v2/document-management/documents/${documentId}/download`,
+      {
+        headers: { ...authHeader },
+        responseType: 'arraybuffer',
+        timeout: 60000,
+      }
+    );
     return Buffer.from(response.data);
   }
 
-  async deleteDocument(documentId: number): Promise<PersonioApiResponse<any>> {
-    const response = await this.axiosInstance.delete(`/v1/company/documents/${documentId}`);
-    return response.data;
+  async deleteDocument(documentId: string): Promise<void> {
+    const authHeader = await this.auth.getAuthHeader();
+    await axios.delete(
+      `${this.baseUrl}/v2/document-management/documents/${documentId}`,
+      {
+        headers: { ...authHeader },
+        timeout: 30000,
+      }
+    );
+    // V2 returns 204 No Content on success
   }
 
   // Approval workflow endpoints
@@ -586,19 +622,18 @@ export class PersonioClient {
   }
 
   // Helper method to format document data
-  formatDocumentData(document: Document): any {
-    const attrs = document.attributes;
+  formatDocumentData(document: DocumentV2): any {
     return {
-      id: attrs.id,
-      title: attrs.title,
-      employee_id: attrs.employee,
-      category_id: attrs.category?.attributes?.id,
-      category_name: attrs.category?.attributes?.name,
-      file_name: attrs.file_name,
-      file_size: attrs.file_size,
-      file_type: attrs.file_type,
-      created_at: attrs.created_at,
-      updated_at: attrs.updated_at,
+      id: document.id,
+      name: document.name,
+      date: document.date,
+      comment: document.comment,
+      category_id: document.category?.id,
+      owner_id: document.owner?.id,
+      document_type: document.document_type,
+      size: document.size,
+      created_at: document.created_at,
+      virus_scan_status: document.virus_scan?.status,
     };
   }
 

@@ -1,6 +1,6 @@
 {
   "name": "@gomedicus/personio-mcp-server",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A Model Context Protocol server for Personio HR API integration with 52 HR automation tools",
   "private": false,
   "type": "module",
@@ -25,7 +25,7 @@
     "test": "node test-smoke.mjs"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.27.1",
+    "@modelcontextprotocol/sdk": "^1.11.0",
     "axios": "^1.9.0",
     "dotenv": "^16.5.0"
   },
