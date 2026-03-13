@@ -81,37 +81,44 @@ export interface AttendancePeriod {
 
 // V2 Attendance Period interface (based on v2 API structure)
 export interface AttendancePeriodV2 {
-  id: number;
-  type: 'AttendancePeriod' | 'Break';
+  id: string;
+  type: 'WORK' | 'BREAK';
   person: {
-    id: number;
-    type: 'Person';
+    id: string;
+  };
+  approval?: {
+    status: string;
   };
   start: {
     date_time: string;
-    time_zone: string;
   };
   end?: {
     date_time: string;
-    time_zone: string;
   };
+  attribution_date?: string;
   comment?: string;
-  is_holiday: boolean;
-  is_on_time_off: boolean;
+  project?: any;
+  is_auto_generated?: boolean;
+  is_holiday?: boolean;
+  is_on_time_off?: boolean;
   created_at: string;
   updated_at: string;
 }
 
+// V2 Attendance Create Response
+export interface AttendancePeriodV2CreateResponse {
+  id: string;
+  affected_periods: AttendancePeriodV2[];
+}
+
 export interface AttendancePeriodV2Request {
-  person_id: number;
-  type: 'AttendancePeriod' | 'Break';
+  person: { id: string };
+  type: 'WORK' | 'BREAK';
   start: {
     date_time: string;
-    time_zone: string;
   };
   end?: {
     date_time: string;
-    time_zone: string;
   };
   comment?: string;
 }
@@ -514,13 +521,17 @@ export class PersonioClient {
     skip_approval?: boolean;
   }): Promise<PersonioApiResponse<AttendancePeriod>> {
     const response = await this.axiosInstance.post('/v1/company/attendances', {
-      employee_id: params.employee_id,
-      date: params.date,
-      start_time: params.start_time,
-      end_time: params.end_time,
-      break: params.break_minutes || 0,
-      comment: params.comment || '',
-      skip_approval: params.skip_approval || false,
+      attendances: [
+        {
+          employee: params.employee_id,
+          date: params.date,
+          start_time: params.start_time,
+          end_time: params.end_time,
+          break: params.break_minutes || 0,
+          comment: params.comment || '',
+        },
+      ],
+      skip_approval: params.skip_approval ?? false,
     });
     return response.data;
   }
@@ -676,7 +687,7 @@ export class PersonioClient {
   }
 
   // Get single attendance period by ID (v2)
-  async getAttendancePeriodV2(id: number): Promise<PersonioApiResponseV2<AttendancePeriodV2>> {
+  async getAttendancePeriodV2(id: string | number): Promise<PersonioApiResponseV2<AttendancePeriodV2>> {
     try {
       const response = await this.axiosInstance.get(`/v2/attendance-periods/${id}`);
       return response.data;
@@ -689,7 +700,7 @@ export class PersonioClient {
   }
 
   // Create attendance period (v2)
-  async createAttendancePeriodV2(params: AttendancePeriodV2Request): Promise<PersonioApiResponseV2<AttendancePeriodV2>> {
+  async createAttendancePeriodV2(params: AttendancePeriodV2Request): Promise<AttendancePeriodV2CreateResponse> {
     try {
       const response = await this.axiosInstance.post('/v2/attendance-periods', params);
       return response.data;
@@ -702,7 +713,7 @@ export class PersonioClient {
   }
 
   // Update attendance period (v2)
-  async updateAttendancePeriodV2(id: number, params: Partial<AttendancePeriodV2Request>): Promise<PersonioApiResponseV2<AttendancePeriodV2>> {
+  async updateAttendancePeriodV2(id: string | number, params: Partial<AttendancePeriodV2Request>): Promise<PersonioApiResponseV2<AttendancePeriodV2>> {
     try {
       const response = await this.axiosInstance.patch(`/v2/attendance-periods/${id}`, params);
       return response.data;
@@ -715,7 +726,7 @@ export class PersonioClient {
   }
 
   // Delete attendance period (v2)
-  async deleteAttendancePeriodV2(id: number): Promise<PersonioApiResponseV2<any>> {
+  async deleteAttendancePeriodV2(id: string | number): Promise<PersonioApiResponseV2<any>> {
     try {
       const response = await this.axiosInstance.delete(`/v2/attendance-periods/${id}`);
       return response.data;
@@ -733,13 +744,14 @@ export class PersonioClient {
       id: attendance.id,
       type: attendance.type,
       person_id: attendance.person.id,
+      approval_status: attendance.approval?.status,
       start_date_time: attendance.start.date_time,
-      start_time_zone: attendance.start.time_zone,
       end_date_time: attendance.end?.date_time,
-      end_time_zone: attendance.end?.time_zone,
+      attribution_date: attendance.attribution_date,
       comment: attendance.comment,
       is_holiday: attendance.is_holiday,
       is_on_time_off: attendance.is_on_time_off,
+      is_auto_generated: attendance.is_auto_generated,
       created_at: attendance.created_at,
       updated_at: attendance.updated_at,
     };
@@ -752,15 +764,13 @@ export class PersonioClient {
     const endDateTime = v1Attendance.end_time ? `${v1Attendance.date}T${v1Attendance.end_time}:00` : undefined;
 
     return {
-      person_id: v1Attendance.employee_id,
-      type: 'AttendancePeriod',
+      person: { id: String(v1Attendance.employee_id) },
+      type: 'WORK',
       start: {
         date_time: startDateTime,
-        time_zone: 'Europe/Berlin', // Default timezone - should be configurable
       },
       end: endDateTime ? {
         date_time: endDateTime,
-        time_zone: 'Europe/Berlin',
       } : undefined,
       comment: v1Attendance.comment,
     };
@@ -1015,15 +1025,16 @@ export class PersonioClient {
 
   // Helper method to convert v2 format to v1 format for backward compatibility
   convertV2ToV1Format(v2Attendance: AttendancePeriodV2): any {
-    const startDate = new Date(v2Attendance.start.date_time);
-    const endDate = v2Attendance.end ? new Date(v2Attendance.end.date_time) : null;
+    // date_time is in format "2026-03-12T03:00:00" — extract date and time parts
+    const startParts = v2Attendance.start.date_time.split('T');
+    const endParts = v2Attendance.end?.date_time?.split('T');
 
     return {
       id: v2Attendance.id,
       employee_id: v2Attendance.person.id,
-      date: startDate.toISOString().split('T')[0],
-      start_time: startDate.toTimeString().substring(0, 5),
-      end_time: endDate ? endDate.toTimeString().substring(0, 5) : null,
+      date: startParts[0],
+      start_time: startParts[1]?.substring(0, 5),
+      end_time: endParts ? endParts[1]?.substring(0, 5) : null,
       break_minutes: 0, // V2 doesn't have break field directly
       comment: v2Attendance.comment || '',
       is_holiday: v2Attendance.is_holiday,

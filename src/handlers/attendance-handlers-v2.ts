@@ -59,8 +59,8 @@ export class AttendanceHandlersV2 {
   }
 
   async handleGetAttendancePeriodV2(args: any) {
-    if (!args || typeof args.id !== 'number') {
-      throw new McpError(ErrorCode.InvalidParams, 'id is required and must be a number');
+    if (!args || !args.id) {
+      throw new McpError(ErrorCode.InvalidParams, 'id is required');
     }
 
     try {
@@ -114,21 +114,32 @@ export class AttendanceHandlersV2 {
     }
 
     try {
+      // Map tool input type values to API type values
+      const typeMap: Record<string, 'WORK' | 'BREAK'> = {
+        'AttendancePeriod': 'WORK',
+        'Break': 'BREAK',
+        'WORK': 'WORK',
+        'BREAK': 'BREAK',
+      };
+      const apiType = typeMap[args.type] || 'WORK';
+
       const response = await this.personioClient.createAttendancePeriodV2({
-        person_id: args.person_id,
-        type: args.type || 'AttendancePeriod',
+        person: { id: String(args.person_id) },
+        type: apiType,
         start: {
           date_time: args.start_date_time,
-          time_zone: args.start_time_zone || 'Europe/Berlin',
         },
         end: args.end_date_time ? {
           date_time: args.end_date_time,
-          time_zone: args.end_time_zone || 'Europe/Berlin',
         } : undefined,
         comment: args.comment,
       });
 
-      const formattedAttendance = this.personioClient.formatAttendanceDataV2(response.data);
+      // V2 create returns { id, affected_periods: [...] }
+      const createdPeriod = response.affected_periods?.find(p => p.id === response.id);
+      const formattedAttendance = createdPeriod
+        ? this.personioClient.formatAttendanceDataV2(createdPeriod)
+        : { id: response.id };
 
       return {
         content: [
@@ -166,8 +177,8 @@ export class AttendanceHandlersV2 {
   }
 
   async handleUpdateAttendancePeriodV2(args: any) {
-    if (!args || typeof args.id !== 'number') {
-      throw new McpError(ErrorCode.InvalidParams, 'id is required and must be a number');
+    if (!args || !args.id) {
+      throw new McpError(ErrorCode.InvalidParams, 'id is required');
     }
 
     // Validate datetime formats if provided
@@ -182,18 +193,24 @@ export class AttendanceHandlersV2 {
     try {
       const updateData: any = {};
 
-      if (args.person_id) updateData.person_id = args.person_id;
-      if (args.type) updateData.type = args.type;
+      if (args.person_id) updateData.person = { id: String(args.person_id) };
+      if (args.type) {
+        const typeMap: Record<string, 'WORK' | 'BREAK'> = {
+          'AttendancePeriod': 'WORK',
+          'Break': 'BREAK',
+          'WORK': 'WORK',
+          'BREAK': 'BREAK',
+        };
+        updateData.type = typeMap[args.type] || args.type;
+      }
       if (args.start_date_time) {
         updateData.start = {
           date_time: args.start_date_time,
-          time_zone: args.start_time_zone || 'Europe/Berlin',
         };
       }
       if (args.end_date_time) {
         updateData.end = {
           date_time: args.end_date_time,
-          time_zone: args.end_time_zone || 'Europe/Berlin',
         };
       }
       if (args.comment !== undefined) updateData.comment = args.comment;
@@ -236,8 +253,8 @@ export class AttendanceHandlersV2 {
   }
 
   async handleDeleteAttendancePeriodV2(args: any) {
-    if (!args || typeof args.id !== 'number') {
-      throw new McpError(ErrorCode.InvalidParams, 'id is required and must be a number');
+    if (!args || !args.id) {
+      throw new McpError(ErrorCode.InvalidParams, 'id is required');
     }
 
     try {

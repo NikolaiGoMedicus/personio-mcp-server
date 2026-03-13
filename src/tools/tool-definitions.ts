@@ -570,8 +570,8 @@ export const toolDefinitions = [
       type: 'object',
       properties: {
         id: {
-          type: 'number',
-          description: 'Attendance period ID',
+          type: 'string',
+          description: 'Attendance period ID (UUID)',
         },
       },
       required: ['id'],
@@ -589,24 +589,16 @@ export const toolDefinitions = [
         },
         type: {
           type: 'string',
-          enum: ['AttendancePeriod', 'Break'],
-          description: 'Type of attendance period (default: AttendancePeriod)',
+          enum: ['WORK', 'BREAK'],
+          description: 'Type of attendance period (default: WORK)',
         },
         start_date_time: {
           type: 'string',
-          description: 'Start datetime in ISO 8601 format (e.g., 2024-01-01T09:00:00)',
-        },
-        start_time_zone: {
-          type: 'string',
-          description: 'Start timezone (default: Europe/Berlin)',
+          description: 'Start datetime in ISO 8601 format without timezone (e.g., 2024-01-01T09:00:00)',
         },
         end_date_time: {
           type: 'string',
-          description: 'End datetime in ISO 8601 format (e.g., 2024-01-01T17:00:00)',
-        },
-        end_time_zone: {
-          type: 'string',
-          description: 'End timezone (default: Europe/Berlin)',
+          description: 'End datetime in ISO 8601 format without timezone (e.g., 2024-01-01T17:00:00)',
         },
         comment: {
           type: 'string',
@@ -623,8 +615,8 @@ export const toolDefinitions = [
       type: 'object',
       properties: {
         id: {
-          type: 'number',
-          description: 'Attendance period ID',
+          type: 'string',
+          description: 'Attendance period ID (UUID)',
         },
         person_id: {
           type: 'number',
@@ -632,24 +624,16 @@ export const toolDefinitions = [
         },
         type: {
           type: 'string',
-          enum: ['AttendancePeriod', 'Break'],
+          enum: ['WORK', 'BREAK'],
           description: 'Type of attendance period',
         },
         start_date_time: {
           type: 'string',
-          description: 'Start datetime in ISO 8601 format',
-        },
-        start_time_zone: {
-          type: 'string',
-          description: 'Start timezone',
+          description: 'Start datetime in ISO 8601 format without timezone',
         },
         end_date_time: {
           type: 'string',
-          description: 'End datetime in ISO 8601 format',
-        },
-        end_time_zone: {
-          type: 'string',
-          description: 'End timezone',
+          description: 'End datetime in ISO 8601 format without timezone',
         },
         comment: {
           type: 'string',
@@ -666,8 +650,8 @@ export const toolDefinitions = [
       type: 'object',
       properties: {
         id: {
-          type: 'number',
-          description: 'Attendance period ID',
+          type: 'string',
+          description: 'Attendance period ID (UUID)',
         },
       },
       required: ['id'],
