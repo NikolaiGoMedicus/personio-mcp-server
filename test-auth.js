@@ -3,9 +3,11 @@
 // Test script to verify authentication with Personio API
 // Run this with: node test-auth.js
 
-require('dotenv').config();
+import 'dotenv/config';
 
-const { PersonioAuth } = require('./build/auth/personio-auth.js');
+import { PersonioAuth } from './build/auth/personio-auth.js';
+
+import { PersonioClient } from './build/api/personio-client.js';
 
 console.log('🔑 Testing Personio Authentication\n');
 
@@ -89,7 +91,6 @@ async function testAuth() {
 
   console.log('\n📌 Testing API calls with obtained token...');
   try {
-    const { PersonioClient } = require('./build/api/personio-client.js');
     const client = new PersonioClient({
       clientId: CLIENT_ID,
       clientSecret: CLIENT_SECRET,
@@ -98,8 +99,16 @@ async function testAuth() {
     // Test v1 endpoint
     console.log('\n   Testing v1 /company/employees endpoint...');
     try {
-      const employees = await client.getEmployees({ limit: 1 });
+      const employees = await client.getEmployees({ limit: 1 , attributes: ['first_name', 'last_name', 'preferred_name', 'email', 'gender', 'status', 'position', 'supervisor', 'employment_type', 'weekly_working_hours', 'hire_date', 'contract_end_date', 'termination_date', 'termination_type', 'termination_reason', 'probation_period_end', 'created_at', 'last_modified_at', 'subcompany', 'office', 'department', 'cost_centers', 'holiday_calendar', 'absence_entitlement', 'work_schedule', 'fix_salary', 'fix_salary_interval', 'hourly_salary', 'last_working_day', 'profile_picture', 'team', 'dynamic_5524208', 'dynamic_5524209', 'dynamic_5524216', 'dynamic_5524218', 'dynamic_5524235', 'dynamic_5524206', 'dynamic_5524212', 'dynamic_5524217', 'dynamic_5524219', 'dynamic_5524236', 'dynamic_5524210', 'dynamic_5524215', 'dynamic_5524207', 'dynamic_5524220', 'dynamic_5524221', 'dynamic_5524226', 'dynamic_5524211', 'dynamic_5524224', 'dynamic_5524213', 'dynamic_5524227', 'dynamic_5524214', 'dynamic_5524228', 'dynamic_5524233', 'dynamic_5524234', 'dynamic_6925241', 'dynamic_5524222', 'dynamic_5524223', 'dynamic_5524225', 'dynamic_5524229', 'dynamic_5524230', 'dynamic_17855110', 'dynamic_17856089', 'dynamic_17912832']});
+      // dump employees response for debugging
+      console.log('   Employees response:', JSON.stringify(employees, null, 2));
       console.log('   ✅ V1 API call successful');
+
+      const employee = await client.getEmployee("35717230", ['first_name', 'last_name', 'preferred_name', 'email', 'gender', 'status', 'position', 'supervisor', 'employment_type', 'weekly_working_hours', 'hire_date', 'contract_end_date', 'termination_date', 'termination_type', 'termination_reason', 'probation_period_end', 'created_at', 'last_modified_at', 'subcompany', 'office', 'department', 'cost_centers', 'holiday_calendar', 'absence_entitlement', 'work_schedule', 'fix_salary', 'fix_salary_interval', 'hourly_salary', 'last_working_day', 'profile_picture', 'team', 'dynamic_5524208', 'dynamic_5524209', 'dynamic_5524216', 'dynamic_5524218', 'dynamic_5524235', 'dynamic_5524206', 'dynamic_5524212', 'dynamic_5524217', 'dynamic_5524219', 'dynamic_5524236', 'dynamic_5524210', 'dynamic_5524215', 'dynamic_5524207', 'dynamic_5524220', 'dynamic_5524221', 'dynamic_5524226', 'dynamic_5524211', 'dynamic_5524224', 'dynamic_5524213', 'dynamic_5524227', 'dynamic_5524214', 'dynamic_5524228', 'dynamic_5524233', 'dynamic_5524234', 'dynamic_6925241', 'dynamic_5524222', 'dynamic_5524223', 'dynamic_5524225', 'dynamic_5524229', 'dynamic_5524230', 'dynamic_17855110', 'dynamic_17856089', 'dynamic_17912832']);
+      // dump employees response for debugging
+      console.log('   Employee response:', JSON.stringify(employee, null, 2));
+      console.log('   ✅ V1 API call successful');
+
     } catch (error) {
       console.log('   ❌ V1 API call failed:', error.message);
     }
