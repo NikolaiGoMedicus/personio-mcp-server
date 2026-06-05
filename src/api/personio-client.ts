@@ -17,7 +17,7 @@ export interface PersonioApiResponse<T = any> {
 
 // V2 API Response interface (different structure from v1)
 export interface PersonioApiResponseV2<T = any> {
-  data: T;
+  _data: T;
   meta?: {
     pagination?: {
       current_page: number;
@@ -81,25 +81,27 @@ export interface AttendancePeriod {
 
 // V2 Attendance Period interface (based on v2 API structure)
 export interface AttendancePeriodV2 {
-  id: number;
-  type: 'AttendancePeriod' | 'Break';
-  person: {
-    id: number;
-    type: 'Person';
+
+  "approval": {
+    "status": string;
   };
-  start: {
-    date_time: string;
-    time_zone: string;
-  };
-  end?: {
-    date_time: string;
-    time_zone: string;
-  };
-  comment?: string;
-  is_holiday: boolean;
-  is_on_time_off: boolean;
-  created_at: string;
-  updated_at: string;
+  "attribution_date": string;
+  "comment": string | null;
+  "created_at": string;
+  "end": {
+    "date_time": string;
+  },
+  "id": string;
+  "is_auto_generated": boolean;
+  "person": {
+    "id": string;
+  },
+  "project": string | null;
+  "start": {
+    "date_time": string;
+  },
+  "type": "WORK" | "BREAK",
+  "updated_at": string;
 }
 
 export interface AttendancePeriodV2Request {
@@ -638,7 +640,7 @@ export class PersonioClient {
     if (params?.start_date_time) queryParams.append('start.date_time.gte', params.start_date_time);
     if (params?.end_date_time) queryParams.append('end.date_time.lte', params.end_date_time);
     if (params?.limit) queryParams.append('limit', params.limit.toString());
-    if (params?.offset) queryParams.append('offset', params.offset.toString());
+    // if (params?.offset) queryParams.append('offset', params.offset.toString());
 
     try {
       const response = await this.axiosInstance.get(`/v2/attendance-periods?${queryParams}`);
@@ -710,12 +712,12 @@ export class PersonioClient {
       type: attendance.type,
       person_id: attendance.person.id,
       start_date_time: attendance.start.date_time,
-      start_time_zone: attendance.start.time_zone,
+      // start_time_zone: attendance.start.time_zone,
       end_date_time: attendance.end?.date_time,
-      end_time_zone: attendance.end?.time_zone,
+      // end_time_zone: attendance.end?.time_zone,
       comment: attendance.comment,
-      is_holiday: attendance.is_holiday,
-      is_on_time_off: attendance.is_on_time_off,
+      //is_holiday: attendance.is_holiday,
+      // is_on_time_off: attendance.is_on_time_off,
       created_at: attendance.created_at,
       updated_at: attendance.updated_at,
     };
@@ -1002,8 +1004,8 @@ export class PersonioClient {
       end_time: endDate ? endDate.toTimeString().substring(0, 5) : null,
       break_minutes: 0, // V2 doesn't have break field directly
       comment: v2Attendance.comment || '',
-      is_holiday: v2Attendance.is_holiday,
-      is_on_time_off: v2Attendance.is_on_time_off,
+      // is_holiday: v2Attendance.is_holiday,
+      // is_on_time_off: v2Attendance.is_on_time_off,
       updated_at: v2Attendance.updated_at,
     };
   }

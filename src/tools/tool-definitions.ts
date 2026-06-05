@@ -539,7 +539,7 @@ export const toolDefinitions = [
       type: 'object',
       properties: {
         person_id: {
-          type: 'number',
+          type: 'string',
           description: 'Filter by specific person/employee ID',
         },
         start_date_time: {
@@ -555,12 +555,7 @@ export const toolDefinitions = [
           description: 'Maximum number of records (default: 200)',
           minimum: 1,
           maximum: 200,
-        },
-        offset: {
-          type: 'number',
-          description: 'Number of records to skip for pagination',
-          minimum: 0,
-        },
+        }
       },
     },
   },
@@ -667,7 +662,7 @@ export const toolDefinitions = [
       type: 'object',
       properties: {
         id: {
-          type: 'number',
+          type: 'string',
           description: 'Attendance period ID',
         },
       },

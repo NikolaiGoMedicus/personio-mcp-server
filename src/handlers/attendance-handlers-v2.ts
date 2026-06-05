@@ -14,8 +14,8 @@ export class AttendanceHandlersV2 {
         offset: args?.offset || 0,
       });
 
-      const formattedAttendances = Array.isArray(response.data)
-        ? response.data.map(att => this.personioClient.formatAttendanceDataV2(att))
+      const formattedAttendances = Array.isArray(response._data)
+        ? response._data.map(att => this.personioClient.formatAttendanceDataV2(att))
         : [];
 
       return {
@@ -65,7 +65,7 @@ export class AttendanceHandlersV2 {
 
     try {
       const response = await this.personioClient.getAttendancePeriodV2(args.id);
-      const formattedAttendance = this.personioClient.formatAttendanceDataV2(response.data);
+      const formattedAttendance = this.personioClient.formatAttendanceDataV2(response._data);
 
       return {
         content: [
@@ -128,7 +128,7 @@ export class AttendanceHandlersV2 {
         comment: args.comment,
       });
 
-      const formattedAttendance = this.personioClient.formatAttendanceDataV2(response.data);
+      const formattedAttendance = this.personioClient.formatAttendanceDataV2(response._data);
 
       return {
         content: [
@@ -199,7 +199,7 @@ export class AttendanceHandlersV2 {
       if (args.comment !== undefined) updateData.comment = args.comment;
 
       const response = await this.personioClient.updateAttendancePeriodV2(args.id, updateData);
-      const formattedAttendance = this.personioClient.formatAttendanceDataV2(response.data);
+      const formattedAttendance = this.personioClient.formatAttendanceDataV2(response._data);
 
       return {
         content: [
@@ -236,8 +236,8 @@ export class AttendanceHandlersV2 {
   }
 
   async handleDeleteAttendancePeriodV2(args: any) {
-    if (!args || typeof args.id !== 'number') {
-      throw new McpError(ErrorCode.InvalidParams, 'id is required and must be a number');
+    if (!args || typeof args.id !== 'string') {
+      throw new McpError(ErrorCode.InvalidParams, 'id is required and must be a string');
     }
 
     try {
@@ -302,7 +302,7 @@ export class AttendanceHandlersV2 {
           end_date_time: args.end_date ? `${args.end_date}T23:59:59` : undefined,
           limit: args.limit || 50,
         });
-        v2Data = v2Response.data;
+        v2Data = v2Response._data;
       } catch (error) {
         v2Error = error instanceof Error ? error.message : 'Unknown error';
       }

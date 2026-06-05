@@ -116,7 +116,12 @@ async function testAuth() {
     // Test v2 endpoint
     console.log('\n   Testing v2 /attendance-periods endpoint...');
     try {
-      const attendance = await client.getAttendancePeriodsV2({ limit: 1 });
+      const attendance = await client.getAttendancePeriodsV2({
+        limit: 10,
+        end_date_time: "2026-05-13T23:59:59",
+        start_date_time: "2026-05-12T00:00:00"
+      });
+      console.log('   Attendance response:', JSON.stringify(attendance, null, 2));
       console.log('   ✅ V2 API call successful');
     } catch (error) {
       console.log('   ❌ V2 API call failed:', error.message);
