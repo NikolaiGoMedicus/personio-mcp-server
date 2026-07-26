@@ -1,7 +1,7 @@
 {
   "name": "@gomedicus/personio-mcp-server",
-  "version": "1.1.0",
-  "description": "A Model Context Protocol server for Personio HR API integration with 52 HR automation tools",
+  "version": "1.1.1",
+  "description": "A Model Context Protocol server for Personio HR API integration with 40 HR automation tools",
   "private": false,
   "type": "module",
   "bin": {
@@ -13,7 +13,8 @@
     "scripts/setup.mjs",
     "scripts/patch-sdk.mjs",
     "scripts/postinstall.js",
-    "CLAUDE.md"
+    "SECURITY.md",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "build": "tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\"",

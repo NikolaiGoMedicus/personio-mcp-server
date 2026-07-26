@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > Note: releases 1.0.0 through 1.1.0 were published without changelog entries.
 > See the git history for the changes they contained.
 
-## [Unreleased]
+## [1.1.1] - 2026-07-26
 
 ### Added
 - **Data Protection & Compliance section in the README**, stating that the
@@ -36,6 +36,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `.gitignore` was missing a trailing newline, which merged `.env*` with the
   following entry. `.npmrc` is now ignored so registry configuration and any
   auth token cannot be committed accidentally.
+- Package description claimed 52 tools; the actual count is 40.
+- `CLAUDE.md`, an internal development and rollout document, was shipped to npm
+  consumers via the `files` field. Replaced with `SECURITY.md` and
+  `CHANGELOG.md`, which are relevant to consumers and which the README links to.
 
 ## [0.1.0] - 2025-05-23
 
