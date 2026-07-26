@@ -15,7 +15,7 @@ export class UtilityHandlers {
               personio_api: healthStatus,
               server_info: {
                 name: 'personio-server',
-                version: '0.1.0',
+                version: '1.1.0',
                 timestamp: new Date().toISOString(),
               },
             }, null, 2),
@@ -32,7 +32,7 @@ export class UtilityHandlers {
               error: error instanceof Error ? error.message : 'Unknown error',
               server_info: {
                 name: 'personio-server',
-                version: '0.1.0',
+                version: '1.1.0',
                 timestamp: new Date().toISOString(),
               },
             }, null, 2),

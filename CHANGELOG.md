@@ -5,6 +5,38 @@ All notable changes to the personio-mcp-server project will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+> Note: releases 1.0.0 through 1.1.0 were published without changelog entries.
+> See the git history for the changes they contained.
+
+## [Unreleased]
+
+### Added
+- **Data Protection & Compliance section in the README**, stating that the
+  deploying party is the data controller and listing the GDPR obligations that
+  apply (legal basis, record of processing activities, processor agreements
+  covering both Personio and the LLM provider, international transfers, data
+  minimisation, access control, applicant-data retention, DPO and works council
+  involvement).
+- Section on the processing of personal data in `SECURITY.md`, including the MCP
+  client as a data recipient and the absence of a per-user authorisation layer.
+- README documentation for the 22 tools that were implemented but undocumented:
+  document management (6), recruiting (10), approvals (5) and
+  `get_team_availability`.
+- Explicit warnings marking write and destructive operations, and flagging the
+  V2 Recruiting API as Beta.
+- Least-privilege and test-in-isolation guidance in `SECURITY.md`.
+
+### Changed
+- Installation heading is no longer addressed to a specific organisation.
+- Feature list now reflects document management, recruiting and approval
+  capabilities.
+- Server now reports its actual package version instead of a hardcoded `0.1.0`.
+
+### Fixed
+- `.gitignore` was missing a trailing newline, which merged `.env*` with the
+  following entry. `.npmrc` is now ignored so registry configuration and any
+  auth token cannot be committed accidentally.
+
 ## [0.1.0] - 2025-05-23
 
 ### Added
