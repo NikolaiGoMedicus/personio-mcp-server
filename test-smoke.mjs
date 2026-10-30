@@ -298,20 +298,18 @@ await test('getDocumentCategories', async () => {
 });
 
 if (ids.employeeId) {
-  await test('getEmployeeDocuments', async () => {
-    try {
-      const result = await documentH.handleGetEmployeeDocuments({ employee_id: ids.employeeId });
-      const data = parseResult(result);
-      assert(data.employee_id === ids.employeeId, 'employee id matches');
-      assert(Array.isArray(data.documents), 'documents is array');
-    } catch (err) {
-      // 404 = endpoint not available for this employee/plan — still reachable
-      assert(isNotFound(err), `unexpected error: ${err.message}`);
-      console.log('    (404 — route not available for this employee)');
+  await test('getEmployeeDocuments (V2)', async () => {
+    const result = await documentH.handleGetEmployeeDocuments({ employee_id: ids.employeeId });
+    if (is403(result)) {
+      console.log('    (403 — endpoint reachable, scope missing)');
+      return;
     }
+    const data = parseResult(result);
+    assert(data.employee_id === ids.employeeId, 'employee id matches');
+    assert(Array.isArray(data.documents), 'documents is array');
   });
 } else {
-  skip('getEmployeeDocuments', 'no employee ID');
+  skip('getEmployeeDocuments (V2)', 'no employee ID');
 }
 
 // ── 8. Approvals ────────────────────────────────────────────────────

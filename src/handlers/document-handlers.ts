@@ -28,31 +28,49 @@ export class DocumentHandlers {
       throw new McpError(ErrorCode.InvalidParams, 'employee_id is required and must be a number');
     }
 
-    const response = await this.personioClient.getEmployeeDocuments(args.employee_id, {
-      category_id: args.category_id,
-      limit: args.limit || 50,
-      offset: args.offset || 0,
-    });
+    try {
+      const response = await this.personioClient.getEmployeeDocuments(args.employee_id, {
+        category_id: args.category_id,
+        limit: args.limit || 50,
+        cursor: args.cursor,
+      });
 
-    const formattedDocuments = response.data.map(document => 
-      this.personioClient.formatDocumentData(document)
-    );
+      const documents = response._data || [];
+      const formattedDocuments = documents.map(document =>
+        this.personioClient.formatDocumentData(document)
+      );
 
-    return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify({
-            employee_id: args.employee_id,
-            documents: formattedDocuments,
-            total: response.metadata?.total_elements || formattedDocuments.length,
-            filters: {
-              category_id: args.category_id,
-            },
-          }, null, 2),
-        },
-      ],
-    };
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({
+              employee_id: args.employee_id,
+              documents: formattedDocuments,
+              total: formattedDocuments.length,
+              filters: {
+                category_id: args.category_id,
+              },
+              pagination: response._meta,
+            }, null, 2),
+          },
+        ],
+      };
+    } catch (error: any) {
+      if (error?.response?.status === 403) {
+        return {
+          content: [{
+            type: 'text',
+            text: JSON.stringify({
+              error: 'Access denied to Document Management API. Ensure your API credentials have the document management scope.',
+              employee_id: args.employee_id,
+            }, null, 2),
+          }],
+          isError: true,
+        };
+      }
+      throw new McpError(ErrorCode.InternalError, `Failed to get employee documents: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 
   async handleUploadDocument(args: any) {
@@ -78,16 +96,15 @@ export class DocumentHandlers {
         file_name: args.file_name || 'document',
       });
 
-      const formattedDocument = this.personioClient.formatDocumentData(response.data);
-
+      // Upload uses V1 endpoint — return raw response data
       return {
         content: [
           {
             type: 'text',
             text: JSON.stringify({
               success: true,
-              document: formattedDocument,
-              message: 'Document uploaded successfully',
+              document: response.data,
+              message: 'Document uploaded successfully (via V1 API)',
             }, null, 2),
           },
         ],
@@ -98,8 +115,8 @@ export class DocumentHandlers {
   }
 
   async handleDownloadDocument(args: any) {
-    if (!args || typeof args.document_id !== 'number') {
-      throw new McpError(ErrorCode.InvalidParams, 'document_id is required and must be a number');
+    if (!args || typeof args.document_id !== 'string') {
+      throw new McpError(ErrorCode.InvalidParams, 'document_id is required and must be a string');
     }
 
     try {
@@ -126,8 +143,8 @@ export class DocumentHandlers {
   }
 
   async handleDeleteDocument(args: any) {
-    if (!args || typeof args.document_id !== 'number') {
-      throw new McpError(ErrorCode.InvalidParams, 'document_id is required and must be a number');
+    if (!args || typeof args.document_id !== 'string') {
+      throw new McpError(ErrorCode.InvalidParams, 'document_id is required and must be a string');
     }
 
     try {
@@ -151,8 +168,8 @@ export class DocumentHandlers {
   }
 
   async handleGetDocumentsByCategory(args: any) {
-    if (!args || typeof args.category_id !== 'number') {
-      throw new McpError(ErrorCode.InvalidParams, 'category_id is required and must be a number');
+    if (!args || (typeof args.category_id !== 'number' && typeof args.category_id !== 'string')) {
+      throw new McpError(ErrorCode.InvalidParams, 'category_id is required');
     }
 
     // Get all employees first, then get their documents for the specified category
@@ -160,17 +177,18 @@ export class DocumentHandlers {
       limit: args.employee_limit || 100,
     });
 
-    const allDocuments = [];
+    const allDocuments: any[] = [];
     const employees = employeesResponse.data.map(emp => this.personioClient.formatEmployeeData(emp));
 
     for (const employee of employees) {
       try {
         const documentsResponse = await this.personioClient.getEmployeeDocuments(employee.id, {
-          category_id: args.category_id,
+          category_id: args.category_id.toString(),
           limit: 50,
         });
 
-        const employeeDocuments = documentsResponse.data.map(doc => ({
+        const documents = documentsResponse._data || [];
+        const employeeDocuments = documents.map(doc => ({
           ...this.personioClient.formatDocumentData(doc),
           employee_name: employee.name,
           employee_email: employee.email,

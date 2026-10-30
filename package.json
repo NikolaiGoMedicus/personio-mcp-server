@@ -1,7 +1,7 @@
 {
   "name": "@gomedicus/personio-mcp-server",
-  "version": "1.0.1",
-  "description": "A Model Context Protocol server for Personio HR API integration with 52 HR automation tools",
+  "version": "1.1.1",
+  "description": "A Model Context Protocol server for Personio HR API integration with 40 HR automation tools",
   "private": false,
   "type": "module",
   "bin": {
@@ -11,12 +11,14 @@
   "files": [
     "build",
     "scripts/setup.mjs",
+    "scripts/patch-sdk.mjs",
     "scripts/postinstall.js",
-    "CLAUDE.md"
+    "SECURITY.md",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "build": "tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
-    "prepare": "npm run build",
+    "prepare": "node scripts/patch-sdk.mjs && npm run build",
     "postinstall": "node scripts/postinstall.js",
     "setup": "node scripts/setup.mjs",
     "watch": "tsc --watch",
@@ -25,7 +27,7 @@
     "test": "node test-smoke.mjs"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.27.1",
+    "@modelcontextprotocol/sdk": "1.27.1",
     "axios": "^1.9.0",
     "dotenv": "^16.5.0"
   },
@@ -49,5 +51,9 @@
     "mcp",
     "model-context-protocol"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  }
 }

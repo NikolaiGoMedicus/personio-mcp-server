@@ -43,7 +43,7 @@ src/
 │   ├── approval-handlers.ts          # pending, attendance/absence status, summary
 │   ├── recruiting-handlers.ts        # v2 recruiting API (apps, candidates, jobs)
 │   └── utility-handlers.ts           # health check
-├── tools/tool-definitions.ts         # All 52 tool schemas (JSON Schema)
+├── tools/tool-definitions.ts         # All 40 tool schemas (JSON Schema)
 ├── validators/index.ts               # Input validation functions
 └── utils/export-helpers.ts           # CSV export
 test-smoke.mjs                        # Smoke test suite (no framework)
@@ -65,7 +65,7 @@ test-smoke.mjs                        # Smoke test suite (no framework)
 ## Testing
 
 ### Smoke Tests (`test-smoke.mjs`)
-- **31 tests**, 10 groups, ~15-20s runtime
+- **32 tests**, 10 groups, ~15-20s runtime
 - READ-ONLY: no create/update/delete
 - Runs against live Personio API (needs `PERSONIO_CLIENT_ID` + `PERSONIO_CLIENT_SECRET` in `.env`)
 - Tolerates 403 (scope missing) and 404 (route unavailable) as "pass"
@@ -76,6 +76,7 @@ test-smoke.mjs                        # Smoke test suite (no framework)
 - **Recruiting `updated_at` filters** (`updated_at_after`/`updated_at_before`) may return API errors depending on API version/plan — the test tolerates this
 - **V2 Attendance** may return 403 if API credentials lack the v2 attendance scope — test skips gracefully
 - **Recruiting endpoints** may return 403 if credentials lack `personio:recruiting:read` scope
+- **V2 Attendance response shapes differ**: the list endpoint wraps results in `_data`, `GET /v2/attendance-periods/{id}` returns the period object directly, and create/update return `{ id, affected_periods }`
 
 ## Findings & Bug History
 
@@ -126,7 +127,7 @@ personio-mcp-setup
 # → Verifies installation
 
 # 3. Restart Claude Desktop
-# Done! All 52 Personio tools available in Claude
+# Done! All 40 Personio tools available in Claude
 ```
 
 ### Package Contents

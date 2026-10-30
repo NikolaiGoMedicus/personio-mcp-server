@@ -1,15 +1,70 @@
 # personio-mcp-server
 
-A Model Context Protocol (MCP) server for integrating with the Personio HR API. This server provides tools for accessing employee data, attendance records, absence information, and analytics through Claude or other AI assistants that support the MCP protocol.
+A Model Context Protocol (MCP) server for integrating with the Personio HR API. This server provides tools for accessing employee data, attendance records, absence information, HR documents, recruiting data and analytics through Claude or other AI assistants that support the MCP protocol.
 
 ## Features
 
 - **Employee Management**: Get employee details, list all employees, search for employees, filter by office/location
 - **Data Export**: Export employee lists in JSON or CSV format for easy spreadsheet integration
-- **Attendance Tracking**: Retrieve attendance records, check current attendance status
+- **Attendance Tracking**: Retrieve attendance records, check current attendance status; create, update and delete attendance periods (V1 and V2 API)
 - **Absence Management**: View absences, check absence balances, get absence types
+- **Document Management**: List, download, upload and delete employee documents, browse document categories (V2 API)
+- **Recruiting**: List and retrieve jobs, candidates and applications, inspect stage transitions, download application documents such as CVs and cover letters (V2 API, Beta)
+- **Approvals**: Inspect pending approvals, attendance and absence approval status, create attendance with an approval workflow
 - **Analytics**: Generate attendance reports, check team availability, analyze absence statistics
 - **Utilities**: API health check
+
+## ⚠️ Data Protection & Compliance
+
+This server reads and writes **personal data about identifiable individuals** —
+both **employees** (names, contact details, employment data, attendance and
+absence records, HR documents) and **job applicants** (candidate profiles,
+applications, CVs and cover letters). It exposes that data to an MCP client,
+which is typically a Large Language Model operated by a third party.
+
+**Whoever deploys this software is the data controller and bears sole
+responsibility for the lawfulness of that processing.** The authors are not a
+processor for your deployment and have no visibility into it. Before using this
+server on a production Personio account, make sure you have addressed at least:
+
+- a **legal basis** for each intended use case (GDPR Art. 6; for employee data
+  in the EU typically Art. 88 in combination with national employment law)
+- an entry in your **record of processing activities** (Art. 30)
+- **data processing agreements** with *both* Personio *and* the provider of the
+  MCP client / LLM (Art. 28) — prompts and tool results, including personal
+  data, are transmitted to that provider
+- **international transfers** assessed and safeguarded if the LLM provider
+  processes data outside the EU/EEA (Chapter V)
+- **data minimisation** (Art. 5(1)(c)): scope the Personio API credentials as
+  narrowly as your setup allows, and query only the employees, fields and date
+  ranges you actually need — several tools return complete data sets by default
+- **access control and logging** (Art. 32): anyone who can talk to the MCP
+  client can read everything the credentials permit
+- **retention rules**, in particular for **applicant data**, which in many
+  jurisdictions must be deleted within a fixed period after a hiring decision
+- consultation of your **data protection officer** and, where applicable, your
+  **works council or employee representatives** — in several jurisdictions,
+  tooling that makes employee attendance and performance data queryable is
+  subject to codetermination and must be agreed before rollout
+
+### Destructive and write operations
+
+The following tools **modify or delete data in your production HR system**:
+`create_attendance_period_v2`, `update_attendance_period_v2`,
+`delete_attendance_period_v2`, `create_attendance_with_approval`,
+`upload_document`, `delete_document`. An LLM may invoke them based on
+misinterpreted instructions. Test against a sandbox or a throwaway employee
+record first, and consider restricting credential scopes if you only need read
+access.
+
+### Beta interfaces
+
+The recruiting tools build on Personio's V2 Recruiting API, which Personio
+labels as Beta. Its behaviour and availability may change without notice.
+
+This software is provided **as is**, without warranty of any kind, and the
+authors accept no liability for unlawful or unintended processing carried out
+with it. See [`LICENSE`](LICENSE) and [`SECURITY.md`](SECURITY.md).
 
 ## Prerequisites
 
@@ -18,7 +73,7 @@ A Model Context Protocol (MCP) server for integrating with the Personio HR API. 
 
 ## Installation
 
-### Quick Install (Recommended for GoMedicus Team)
+### Quick Install (Recommended)
 
 Install the package globally via npm:
 
@@ -211,6 +266,51 @@ list_employees({ office: "Berlin", format: "csv" })
 - `get_absence_types`: Get all available absence/time-off types
 - `get_team_absence_overview`: Get overview of who is out today or in a specific date range
 - `get_absence_statistics`: Get absence usage statistics and trends
+
+### Document Tools (V2 Document Management API)
+
+> ⚠️ These tools access **HR documents**, which regularly contain sensitive
+> employment information. `upload_document` and `delete_document` write to and
+> delete from your production Personio account.
+
+- `get_employee_documents`: Get documents for a specific employee
+- `get_document_categories`: Get all available document categories in the company
+- `get_documents_by_category`: Get all documents in a specific category across all employees
+- `download_document`: Download a document by ID
+- `upload_document`: Upload a document for an employee — **write operation**
+- `delete_document`: Delete a document by ID — **destructive operation**
+
+### Recruiting Tools (V2 Recruiting API, Beta)
+
+> ⚠️ These tools access **applicant data**. Applicant data is subject to its own
+> retention rules in many jurisdictions and is usually not covered by the legal
+> basis you rely on for employee data. See
+> [Data Protection & Compliance](#️-data-protection--compliance).
+>
+> Personio labels the underlying V2 Recruiting API as Beta — behaviour may change.
+
+- `list_recruiting_jobs`: List all recruiting job postings (cursor-based pagination)
+- `get_recruiting_job`: Get detailed information about a specific job posting by ID
+- `list_recruiting_categories`: List all recruiting job categories
+- `list_recruiting_candidates`: List all recruiting candidates (cursor-based pagination)
+- `get_recruiting_candidate`: Get detailed information about a specific candidate by ID
+- `list_recruiting_applications`: List all applications, optionally filtered by date range or email
+- `get_recruiting_application`: Get detailed information about a specific application by ID
+- `list_application_stage_transitions`: List the stage transition history for an application
+- `list_application_documents`: List all documents (CV, cover letter, etc.) attached to an application
+- `download_application_document`: Download an application document by ID — returns base64-encoded file content
+
+### Approval Tools
+
+- `get_pending_approvals`: Get pending approval requests
+- `get_attendance_approval_status`: Get attendance records with their approval status
+- `get_absence_approval_status`: Get absence requests with their approval status
+- `get_approval_workflow_summary`: Get a summary of all approval workflows and their status
+- `create_attendance_with_approval`: Create an attendance record with approval workflow — **write operation**
+
+### Team Tools
+
+- `get_team_availability`: Get current team availability and status
 
 ### Utility Tools
 

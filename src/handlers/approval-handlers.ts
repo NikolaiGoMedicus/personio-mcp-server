@@ -20,18 +20,29 @@ export class ApprovalHandlers {
         skip_approval: args.skip_approval || false,
       });
 
-      const formattedAttendance = this.personioClient.formatAttendanceData(response.data);
+      // V1 create response has a different format than GET:
+      // { success: true, data: { message: "...", id: [{ id: 123 }] } }
+      const responseData = response.data as any;
+      const createdIds = responseData?.id || responseData?.ids || [];
 
       return {
         content: [
           {
             type: 'text',
             text: JSON.stringify({
-              success: true,
-              attendance: formattedAttendance,
+              success: response.success !== false,
+              created_ids: createdIds,
+              attendance: {
+                employee_id: args.employee_id,
+                date: args.date,
+                start_time: args.start_time,
+                end_time: args.end_time,
+                break_minutes: args.break_minutes || 0,
+                comment: args.comment || '',
+              },
               approval_required: !args.skip_approval,
-              message: args.skip_approval 
-                ? 'Attendance record created without approval' 
+              message: args.skip_approval
+                ? 'Attendance record created without approval'
                 : 'Attendance record created and sent for approval',
             }, null, 2),
           },

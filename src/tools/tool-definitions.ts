@@ -274,7 +274,7 @@ export const toolDefinitions = [
   },
   {
     name: 'get_employee_documents',
-    description: 'Get documents for a specific employee',
+    description: 'Get documents for a specific employee (V2 Document Management API)',
     inputSchema: {
       type: 'object',
       properties: {
@@ -283,19 +283,18 @@ export const toolDefinitions = [
           description: 'Employee ID',
         },
         category_id: {
-          type: 'number',
+          type: 'string',
           description: 'Optional: filter by document category ID',
         },
         limit: {
           type: 'number',
-          description: 'Maximum number of documents to return (default: 50)',
+          description: 'Maximum number of documents to return (default: 50, max: 200)',
           minimum: 1,
           maximum: 200,
         },
-        offset: {
-          type: 'number',
-          description: 'Number of documents to skip for pagination',
-          minimum: 0,
+        cursor: {
+          type: 'string',
+          description: 'Pagination cursor from previous response',
         },
       },
       required: ['employee_id'],
@@ -333,13 +332,13 @@ export const toolDefinitions = [
   },
   {
     name: 'download_document',
-    description: 'Download a document by ID',
+    description: 'Download a document by ID (V2 Document Management API)',
     inputSchema: {
       type: 'object',
       properties: {
         document_id: {
-          type: 'number',
-          description: 'Document ID',
+          type: 'string',
+          description: 'Document ID (UUID string from V2 API)',
         },
       },
       required: ['document_id'],
@@ -347,13 +346,13 @@ export const toolDefinitions = [
   },
   {
     name: 'delete_document',
-    description: 'Delete a document by ID',
+    description: 'Delete a document by ID (V2 Document Management API)',
     inputSchema: {
       type: 'object',
       properties: {
         document_id: {
-          type: 'number',
-          description: 'Document ID',
+          type: 'string',
+          description: 'Document ID (UUID string from V2 API)',
         },
       },
       required: ['document_id'],
@@ -566,8 +565,8 @@ export const toolDefinitions = [
       type: 'object',
       properties: {
         id: {
-          type: 'number',
-          description: 'Attendance period ID',
+          type: 'string',
+          description: 'Attendance period ID (UUID)',
         },
       },
       required: ['id'],
@@ -585,24 +584,16 @@ export const toolDefinitions = [
         },
         type: {
           type: 'string',
-          enum: ['AttendancePeriod', 'Break'],
-          description: 'Type of attendance period (default: AttendancePeriod)',
+          enum: ['WORK', 'BREAK'],
+          description: 'Type of attendance period (default: WORK)',
         },
         start_date_time: {
           type: 'string',
-          description: 'Start datetime in ISO 8601 format (e.g., 2024-01-01T09:00:00)',
-        },
-        start_time_zone: {
-          type: 'string',
-          description: 'Start timezone (default: Europe/Berlin)',
+          description: 'Start datetime in ISO 8601 format without timezone (e.g., 2024-01-01T09:00:00)',
         },
         end_date_time: {
           type: 'string',
-          description: 'End datetime in ISO 8601 format (e.g., 2024-01-01T17:00:00)',
-        },
-        end_time_zone: {
-          type: 'string',
-          description: 'End timezone (default: Europe/Berlin)',
+          description: 'End datetime in ISO 8601 format without timezone (e.g., 2024-01-01T17:00:00)',
         },
         comment: {
           type: 'string',
@@ -619,8 +610,8 @@ export const toolDefinitions = [
       type: 'object',
       properties: {
         id: {
-          type: 'number',
-          description: 'Attendance period ID',
+          type: 'string',
+          description: 'Attendance period ID (UUID)',
         },
         person_id: {
           type: 'number',
@@ -628,24 +619,16 @@ export const toolDefinitions = [
         },
         type: {
           type: 'string',
-          enum: ['AttendancePeriod', 'Break'],
+          enum: ['WORK', 'BREAK'],
           description: 'Type of attendance period',
         },
         start_date_time: {
           type: 'string',
-          description: 'Start datetime in ISO 8601 format',
-        },
-        start_time_zone: {
-          type: 'string',
-          description: 'Start timezone',
+          description: 'Start datetime in ISO 8601 format without timezone',
         },
         end_date_time: {
           type: 'string',
-          description: 'End datetime in ISO 8601 format',
-        },
-        end_time_zone: {
-          type: 'string',
-          description: 'End timezone',
+          description: 'End datetime in ISO 8601 format without timezone',
         },
         comment: {
           type: 'string',
@@ -663,7 +646,7 @@ export const toolDefinitions = [
       properties: {
         id: {
           type: 'string',
-          description: 'Attendance period ID',
+          description: 'Attendance period ID (UUID)',
         },
       },
       required: ['id'],
